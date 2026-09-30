@@ -28,8 +28,9 @@ You are setting up PaceBeep (repo: pacebeep, public, open source): an interval-r
 3. UI language: **English**.
 
 ### Status
-- **/web is built and deployed**: auth, OAuth for agents, MCP tools below, dashboard, workouts. Verified: full OAuth flow, idempotent replays, cross-user isolation, per-user disconnect.
-- **Next**: /ios, then email verification + password reset (email provider), account deletion and a privacy page.
+- **/web is built and deployed**: auth (incl. Google sign-in), OAuth for agents, MCP tools below, dashboard, workouts, account deletion, `/privacy` and `/terms`. Verified: full OAuth flow, idempotent replays, cross-user isolation, per-user disconnect.
+- **/ios is a prototype**: a timer only (no sign-in, no sync), built to test the one risky part – beeps with the screen locked. The workout is rendered into one audio track (silence with the beeps at their exact times) and played with the background-audio mode; the player's position is the workout clock.
+- **Next**: a real run with the prototype decides whether the full iOS app is worth building. Then password reset (email provider).
 
 ### Architecture
 - **/ios**: SwiftUI app (Xcode project "PaceBeep"), iOS 17+.
