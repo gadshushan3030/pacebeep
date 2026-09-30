@@ -21,7 +21,7 @@ ChatGPT / agent ── DCR + PKCE ──► Next.js on Vercel
                                   Postgres (Neon); every row belongs to one user
 ```
 
-- **Accounts**: email + password (Better Auth). Registration is open; set `SIGNUP_ENABLED=false` to close it.
+- **Accounts**: "Continue with Google" (when `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET` are set) or email + password (Better Auth). With Google on, new accounts come only from Google, whose emails are verified, so nobody can pre-register a password account on someone else's email; password sign-in keeps working for existing accounts. Set `SIGNUP_ENABLED=false` to close registration entirely.
 - **Agents**: an assistant registers itself (dynamic client registration), the user signs in and approves it on `/oauth/consent`, and gets an access token bound to `<BETTER_AUTH_URL>/mcp`. `/mcp` also checks on every request that the user's approval still exists, so **Disconnect** on the dashboard cuts access at once (for that user only).
 - **Data**: `workouts` (plans), `runs` (what happened: `device` = recorded by the phone, `manual` = entered/reported) and `run_feedback` (RPE and notes – self-reported, kept apart from measurements). Every write carries a `request_id`; replaying it returns the same row and never duplicates.
 
@@ -57,7 +57,8 @@ Open http://localhost:3200 and create an account.
 1. Import the repo in Vercel with **Root Directory = `web`**.
 2. **Storage → Create Database → Neon (Free)**, connect it to the project with env prefix `DATABASE` (gives `DATABASE_URL`).
 3. Environment variables: `BETTER_AUTH_SECRET` (`openssl rand -hex 32`), `BETTER_AUTH_URL` (your production URL), optionally `SIGNUP_ENABLED`.
-4. Deploy. The build (`vercel-build`) applies `web/db/migrations/*.sql` before `next build`.
+4. Optional Google sign-in: in Google Cloud create a project, configure the Google Auth Platform (External), and a **Web application** OAuth client with redirect URI `https://<your-app>/api/auth/callback/google`; set `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`. While the app is in "Testing", only listed test users can sign in; publishing requires a privacy policy and terms URL on the Branding page.
+5. Deploy. The build (`vercel-build`) applies `web/db/migrations/*.sql` before `next build`.
 
 ## Connect ChatGPT
 
@@ -75,8 +76,9 @@ Open http://localhost:3200 and create an account.
 ## Roadmap
 
 - iOS app (see `docs/AGENT_BRIEF.md`).
-- Email verification and password reset (needs an email provider, e.g. Resend).
-- Account deletion and a privacy policy page before inviting other users.
+- Privacy policy and terms pages, then publish the Google OAuth app (currently "Testing").
+- Password reset for password accounts (needs an email provider, e.g. Resend).
+- Account deletion before inviting other users.
 
 ## License
 
