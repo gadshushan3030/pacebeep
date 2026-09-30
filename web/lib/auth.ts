@@ -32,6 +32,9 @@ export const auth = betterAuth({
   }),
   // A Google sign-in with the email of an existing account joins that account.
   account: { accountLinking: { enabled: true, trustedProviders: ["google"] } },
+  // "Delete account" on the dashboard. Workouts, runs, feedback, sessions and assistant
+  // connections go with it (foreign keys cascade from "user").
+  user: { deleteUser: { enabled: true } },
   // Session-to-JWT endpoint isn't used; OAuth access tokens come from mcp().
   disabledPaths: ["/token"],
   plugins: [

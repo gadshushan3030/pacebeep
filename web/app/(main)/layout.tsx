@@ -5,6 +5,7 @@ import { requireUser } from "@/lib/session";
 const NAV = [
   { href: "/", label: "Dashboard" },
   { href: "/workouts", label: "Workouts" },
+  { href: "/account", label: "Account" },
 ] as const;
 
 export default async function MainLayout({ children }: LayoutProps<"/">) {

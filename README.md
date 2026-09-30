@@ -72,13 +72,14 @@ Open http://localhost:3200 and create an account.
 - No secrets in the repo: `.env*` is ignored; only `.env.example` is committed.
 - Assistants never get a key – only a short-lived access token (1 hour) and a refresh token, after the user approves.
 - Every query and write is scoped to the signed-in user (or the user behind the token); cross-user access returns "not found".
+- Users can delete their account (Account page); all their data and assistant connections are removed with it.
+- Public pages: `/privacy` and `/terms` (review them for your own deployment – they name the operator and contact).
 
 ## Roadmap
 
 - iOS app (see `docs/AGENT_BRIEF.md`).
-- Privacy policy and terms pages, then publish the Google OAuth app (currently "Testing").
+- Publish the Google OAuth app (currently "Testing"): fill the Branding page with the home, privacy and terms URLs.
 - Password reset for password accounts (needs an email provider, e.g. Resend).
-- Account deletion before inviting other users.
 
 ## License
 
