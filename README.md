@@ -6,24 +6,21 @@ Interval running with an AI coach. Plan interval workouts, record runs, and let 
 - **ios/** – SwiftUI app (planned): the interval timer with audio cues, offline-first, syncing to the backend.
 - **docs/AGENT_BRIEF.md** – architecture and the brief for coding agents working on this repo.
 
+The auth + MCP layer is also available on its own as a clean template: **[MCP OAuth Starter](https://github.com/gadshushan3030/mcp-oauth-starter)**. Single-owner sibling project: [English Coach](https://github.com/gadshushan3030/english-coach-mcp).
+
 ## How it works
 
-```
-iPhone (planned) ── OAuth 2.1 + PKCE ──┐
-                                       ▼
-ChatGPT / agent ── DCR + PKCE ──► Next.js on Vercel
-                                  ├─ /api/auth/*     Better Auth: accounts, OAuth 2.1 authorization server
-                                  ├─ /.well-known/*  discovery (RFC 8414 / RFC 9728)
-                                  ├─ /oauth/consent  each user approves each assistant
-                                  └─ /mcp            MCP server: token audience = /mcp, live consent check
-                                           │
-                                           ▼
-                                  Postgres (Neon); every row belongs to one user
-```
+![Architecture: runners and AI coaches, two doors into one Next.js app over Postgres](docs/architecture.svg)
 
 - **Accounts**: "Continue with Google" (when `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET` are set) or email + password (Better Auth). With Google on, new accounts come only from Google, whose emails are verified, so nobody can pre-register a password account on someone else's email; password sign-in keeps working for existing accounts. Set `SIGNUP_ENABLED=false` to close registration entirely.
 - **Agents**: an assistant registers itself (dynamic client registration), the user signs in and approves it on `/oauth/consent`, and gets an access token bound to `<BETTER_AUTH_URL>/mcp`. `/mcp` also checks on every request that the user's approval still exists, so **Disconnect** on the dashboard cuts access at once (for that user only).
 - **Data**: `workouts` (plans), `runs` (what happened: `device` = recorded by the phone, `manual` = entered/reported) and `run_feedback` (RPE and notes – self-reported, kept apart from measurements). Every write carries a `request_id`; replaying it returns the same row and never duplicates.
+
+![Data model: workouts (the plan), runs (what happened), run_feedback (how it felt)](docs/data-model.svg)
+
+### How an assistant connects
+
+![Sequence: discover, register, authorize with PKCE, token, tool calls](docs/oauth-flow.svg)
 
 ### MCP tools
 
@@ -74,6 +71,14 @@ Open http://localhost:3200 and create an account.
 - Every query and write is scoped to the signed-in user (or the user behind the token); cross-user access returns "not found".
 - Users can delete their account (Account page); all their data and assistant connections are removed with it.
 - Public pages: `/privacy` and `/terms` (review them for your own deployment – they name the operator and contact).
+
+**Disconnect** is per user: it deletes that user's consent, refresh tokens and access tokens in one transaction, and never the shared client registration.
+
+![Timelines and tables: what Disconnect deletes and why the next call gets 401](docs/disconnect.svg)
+
+**Retries** are safe: a lost response followed by a retry with the same `request_id` returns the same run.
+
+![Sequence: a lost response, a retry with the same request_id, one row](docs/retries.svg)
 
 ## Roadmap
 
