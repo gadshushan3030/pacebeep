@@ -1,0 +1,3 @@
+// Signing for a real iPhone: copy Local.xcconfig.example to Local.xcconfig (gitignored) and fill it in.
+PRODUCT_BUNDLE_IDENTIFIER = dev.pacebeep.PaceBeep
+#include? "Local.xcconfig"

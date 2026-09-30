@@ -3,7 +3,7 @@
 Interval running with an AI coach. Plan interval workouts, record runs, and let your assistant (ChatGPT, Claude or any MCP client) read your training and write plans, over OAuth.
 
 - **web/** – Next.js 16 backend and dashboard: accounts, workouts, runs, and an MCP server at `/mcp`.
-- **ios/** – SwiftUI app (planned): the interval timer with audio cues, offline-first, syncing to the backend.
+- **ios/** – SwiftUI prototype: an interval timer whose beeps keep playing with the screen locked. No backend sync yet.
 - **docs/AGENT_BRIEF.md** – architecture and the brief for coding agents working on this repo.
 
 The auth + MCP layer is also available on its own as a clean template: **[MCP OAuth Starter](https://github.com/gadshushan3030/mcp-oauth-starter)**. Single-owner sibling project: [English Coach](https://github.com/gadshushan3030/english-coach-mcp).
@@ -48,6 +48,17 @@ npm run dev -- -p 3200
 ```
 
 Open http://localhost:3200 and create an account.
+
+## Run on your iPhone (ios)
+
+Requires Xcode 26 and an Apple ID (a free one works; the app then expires after 7 days).
+
+1. Xcode → Settings → Accounts → add your Apple ID.
+2. `cp ios/Local.xcconfig.example ios/Local.xcconfig` and set your team id and a bundle id of your own.
+3. Connect the iPhone, turn on Settings → Privacy & Security → Developer Mode, open `ios/PaceBeep.xcodeproj` and Run.
+4. First launch: trust the developer in Settings → General → VPN & Device Management.
+
+The whole workout is rendered into one audio track (silence with the beeps at their exact times) and played with the background audio mode, so iOS keeps the app alive with the screen locked and the beeps can't drift. After a run the app shows whether the audio played without gaps and how late the voice cues were.
 
 ## Deploy your own (Vercel + Neon)
 
