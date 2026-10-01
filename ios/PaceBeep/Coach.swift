@@ -10,6 +10,7 @@ final class Coach {
     private(set) var signedIn: Bool
     private(set) var pendingRuns = 0
     private(set) var message: String?
+    private(set) var lastSync: Date?
 
     @ObservationIgnored private let auth = Auth()
     @ObservationIgnored private var outbox: [Upload] = []
@@ -49,6 +50,7 @@ final class Coach {
             guard http.statusCode == 200 else { throw URLError(.badServerResponse) }
             workouts = Self.decode(data)
             UserDefaults.standard.set(data, forKey: "workouts")
+            lastSync = Date()
             message = nil
         } catch {
             signedIn = auth.isSignedIn

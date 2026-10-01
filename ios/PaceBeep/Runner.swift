@@ -6,14 +6,31 @@ import Observation
 final class Runner {
     enum State { case idle, preparing, running, paused, done }
 
+    /// What the after-the-run screen shows.
+    struct Summary {
+        let workout: Workout
+        let startedAt: Date
+        /// Time running, pauses left out.
+        let seconds: Double
+        let repsDone: Int
+        let reps: Int
+        let pauses: Int
+        let finished: Bool
+        /// Sent to the coach (runs under 5 minutes, like the quick test, are not).
+        let recorded: Bool
+        /// Seconds the audio stopped while it should have played (iOS froze the app): beeps came late.
+        let audioGap: Int
+    }
+
     private(set) var state = State.idle
     private(set) var workout: Workout?
     /// Workout clock: the audio player's position.
     private(set) var elapsed = 0.0
-    /// After a run: did the audio play without gaps, and did the voice keep up.
-    private(set) var report: [String] = []
-    /// The run just recorded, until the runner rates it (RPE) or starts another one.
-    private(set) var unrated: Upload?
+    private(set) var summary: Summary?
+    /// The RPE given for the run just recorded.
+    private(set) var rating: Int?
+    /// Shown when a workout could not start.
+    private(set) var error: String?
     /// Where recorded runs go (the coach's outbox).
     @ObservationIgnored var onRun: (Upload) -> Void = { _ in }
 
@@ -25,9 +42,9 @@ final class Runner {
     @ObservationIgnored private var startedAt = Date()
     @ObservationIgnored private var pausedAt: Date?
     @ObservationIgnored private var pausedTotal = 0.0
-    @ObservationIgnored private var lateness: [Double] = []
-    @ObservationIgnored private var interruptions = 0
+    @ObservationIgnored private var pauses = 0
     @ObservationIgnored private var interrupted = false
+    @ObservationIgnored private var recorded: Upload?
     @ObservationIgnored private var activity: Activity<WorkoutActivity>?
     @ObservationIgnored private var shownSegment: Int?
 
@@ -36,7 +53,6 @@ final class Runner {
         NotificationCenter.default.addObserver(forName: AVAudioSession.interruptionNotification, object: nil, queue: .main) { [weak self] note in
             guard let self, let raw = note.userInfo?[AVAudioSessionInterruptionTypeKey] as? UInt else { return }
             if AVAudioSession.InterruptionType(rawValue: raw) == .began, state == .running {
-                interruptions += 1
                 interrupted = true
                 pause()
             } else if AVAudioSession.InterruptionType(rawValue: raw) == .ended, interrupted {
@@ -49,8 +65,10 @@ final class Runner {
 
     func start(_ w: Workout) {
         workout = w
-        report = []
-        unrated = nil
+        summary = nil
+        rating = nil
+        recorded = nil
+        error = nil
         state = .preparing
         let url = URL.temporaryDirectory.appending(path: "workout.caf")
         Task.detached(priority: .userInitiated) { [self] in
@@ -79,8 +97,7 @@ final class Runner {
         cues = workout?.cues ?? []
         nextCue = 0
         elapsed = 0
-        lateness = []
-        interruptions = 0
+        pauses = 0
         pausedTotal = 0
         startedAt = Date()
         state = .running
@@ -104,12 +121,9 @@ final class Runner {
             shownSegment = index
             if index == nil { endActivity() } else { updateActivity() }
         }
-        // Voice runs on this timer, beeps are in the track. If iOS froze the app with the screen
-        // locked, the beeps would still be on time and the voice would come late (see report).
+        // Voice runs on this timer, beeps are in the track.
         while nextCue < cues.count, cues[nextCue].time + cues[nextCue].beep.tone.seconds <= elapsed {
-            let cue = cues[nextCue]
-            if let text = cue.text {
-                lateness.append(elapsed - cue.time - cue.beep.tone.seconds)
+            if let text = cues[nextCue].text {
                 let u = AVSpeechUtterance(string: text)
                 u.voice = AVSpeechSynthesisVoice(language: "en-US")
                 synth.speak(u)
@@ -121,6 +135,7 @@ final class Runner {
     func pause() {
         player?.pause()
         pausedAt = Date()
+        pauses += 1
         state = .paused
         elapsed = player?.currentTime ?? elapsed
         updateActivity()
@@ -136,23 +151,60 @@ final class Runner {
         updateActivity()
     }
 
+    /// Stopping after 5 minutes keeps the run (and asks for the RPE); earlier, it's dropped.
     func stop() {
         timer?.invalidate()
+        if let pausedAt { pausedTotal += Date().timeIntervalSince(pausedAt) }
+        pausedAt = nil
         elapsed = player?.currentTime ?? elapsed
         player?.stop()
         synth.stopSpeaking(at: .immediate)
         endActivity()
-        record()
+        if elapsed >= 300 {
+            wrapUp(finished: false)
+        } else {
+            workout = nil
+            state = .idle
+        }
+    }
+
+    /// Back to the home screen from the after-the-run screen.
+    func dismiss() {
         workout = nil
+        summary = nil
         state = .idle
     }
 
     /// The runner's RPE (1-10) for the run just recorded: the same run again, with feedback.
     func rate(_ rpe: Int) {
-        guard var run = unrated else { return }
+        guard rating == nil, var run = recorded else { return }
         run.feedback = Upload.Feedback(request_id: UUID().uuidString, rpe: rpe)
         onRun(run)
-        unrated = nil
+        rating = rpe
+    }
+
+    private func finish() {
+        timer?.invalidate()
+        endActivity()
+        wrapUp(finished: true)
+    }
+
+    private func wrapUp(finished: Bool) {
+        guard let workout else { return }
+        let wall = Date().timeIntervalSince(startedAt) - pausedTotal
+        let reps = workout.segments.filter(\.isWork)
+        var start = 0.0, repsDone = 0
+        for s in workout.segments {
+            if s.isWork, start + s.seconds <= elapsed + 0.5 { repsDone += 1 }
+            start += s.seconds
+        }
+        let audio = finished ? (player?.duration ?? 0) : elapsed
+        record()
+        summary = Summary(
+            workout: workout, startedAt: startedAt, seconds: wall, repsDone: repsDone, reps: reps.count,
+            pauses: pauses, finished: finished, recorded: recorded != nil, audioGap: max(0, Int(wall - audio))
+        )
+        state = .done
     }
 
     /// Sends the run to the coach: every segment reached, with the time actually spent in it.
@@ -173,7 +225,7 @@ final class Runner {
             intervals: intervals
         ))
         onRun(run)
-        unrated = run
+        recorded = run
     }
 
     /// Sent on start, at each new segment and on pause/resume; iOS ticks the countdown in between.
@@ -182,7 +234,9 @@ final class Runner {
         let now = Date()
         let content = ActivityContent(state: WorkoutActivity.ContentState(
             title: current.segment.title,
-            isWork: current.segment.isWork,
+            detail: workout.detail(at: current.index),
+            kind: current.segment.kind.rawValue,
+            index: current.index,
             start: now - (current.segment.seconds - current.remaining),
             end: now + current.remaining,
             pausedAt: state == .paused ? now : nil
@@ -190,7 +244,8 @@ final class Runner {
         if let activity {
             Task { await activity.update(content) }
         } else {
-            activity = try? Activity.request(attributes: WorkoutActivity(workoutName: workout.name), content: content)
+            let attributes = WorkoutActivity(workoutName: workout.name, parts: workout.parts)
+            activity = try? Activity.request(attributes: attributes, content: content)
         }
     }
 
@@ -200,23 +255,8 @@ final class Runner {
         Task { await ending?.end(nil, dismissalPolicy: .immediate) }
     }
 
-    private func finish() {
-        timer?.invalidate()
-        endActivity()
-        record()
-        let wall = Date().timeIntervalSince(startedAt) - pausedTotal
-        let audio = player?.duration ?? 0
-        let gap = wall - audio
-        report = [
-            "Real time \(clock(wall)), audio \(clock(audio)): " + (gap < 1 ? "played without gaps" : "audio stopped for \(Int(gap)) s"),
-            "Voice: \(lateness.count) of \(cues.filter { $0.text != nil }.count) cues, latest \(String(format: "%.1f", lateness.max() ?? 0)) s late",
-            "Interruptions (calls, Siri): \(interruptions)",
-        ]
-        state = .done
-    }
-
     private func fail(_ error: Error) {
-        report = ["Couldn't start: \(error.localizedDescription)"]
+        self.error = "Couldn't start: \(error.localizedDescription)"
         workout = nil
         state = .idle
     }

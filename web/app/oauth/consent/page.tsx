@@ -20,7 +20,7 @@ export default async function ConsentPage({ searchParams }: PageProps<"/oauth/co
       <section className="surface flex flex-col gap-4 p-6">
         {client ? (
           <>
-            <h1 className="text-xl font-bold">Connect an assistant</h1>
+            <h1 className="display text-[32px] [font-stretch:74%]">Connect an app</h1>
             <p>
               <strong>{client.name || "An unnamed app"}</strong> wants to access your PaceBeep data as <strong>{user.email}</strong>:
             </p>
@@ -36,7 +36,7 @@ export default async function ConsentPage({ searchParams }: PageProps<"/oauth/co
             <ConsentButtons />
           </>
         ) : (
-          <h1 className="text-xl font-bold">This connection request was not found or has expired.</h1>
+          <h1 className="display text-[28px] [font-stretch:76%]">This connection request was not found or has expired.</h1>
         )}
       </section>
     </main>

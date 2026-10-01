@@ -4,6 +4,7 @@ Interval running with an AI coach. Plan interval workouts, record runs, and let 
 
 - **web/** – Next.js 16 backend and dashboard: accounts, workouts, runs, and an MCP server at `/mcp`.
 - **ios/** – SwiftUI app: plays the workouts your assistant planned as timed intervals with beeps that keep going with the screen locked, shows a Live Activity (lock screen and Dynamic Island), and sends each run and your RPE back.
+- **design/** – the design: canvas source for every screen, plus the color and type tokens and where they live in code.
 - **docs/AGENT_BRIEF.md** – architecture and the brief for coding agents working on this repo.
 
 The auth + MCP layer is also available on its own as a clean template: **[MCP OAuth Starter](https://github.com/gadshushan3030/mcp-oauth-starter)**. Single-owner sibling project: [English Coach](https://github.com/gadshushan3030/english-coach-mcp).

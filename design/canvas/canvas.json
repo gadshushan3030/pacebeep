@@ -1,0 +1,39 @@
+{
+  "v": 3,
+  "createdOnFiles": { "v": 1, "at": "2026-10-01T05:40:00Z" },
+  "title": "PaceBeep design",
+  "launch": { "view": "canvas" },
+  "pages": [],
+  "boards": {
+    "SignIn.dc.html": { "x": 0, "y": 0, "w": 390, "h": 844, "title": "Sign in", "is_interactive": true },
+    "Main.dc.html": { "x": 470, "y": 0, "w": 390, "h": 844, "title": "Home", "is_interactive": true },
+    "RunWork.dc.html": { "x": 940, "y": 0, "w": 390, "h": 844, "title": "Run: work" },
+    "RunRest.dc.html": { "x": 1410, "y": 0, "w": 390, "h": 844, "title": "Run: rest" },
+    "Done.dc.html": { "x": 1880, "y": 0, "w": 390, "h": 844, "title": "After the run", "is_interactive": true },
+    "LiveWork.dc.html": { "x": 0, "y": 1264, "w": 420, "h": 240, "title": "Live Activity: work" },
+    "LiveRest.dc.html": { "x": 500, "y": 1264, "w": 420, "h": 240, "title": "Live Activity: rest" },
+    "Island.dc.html": { "x": 1000, "y": 1264, "w": 600, "h": 420, "title": "Dynamic Island" },
+    "Dashboard.dc.html": { "x": 0, "y": 2104, "w": 1280, "h": 1180, "title": "Dashboard", "expand": "fill", "is_interactive": true },
+    "RunDetail.dc.html": { "x": 1360, "y": 2104, "w": 1280, "h": 1060, "title": "Run detail", "expand": "fill", "is_interactive": true },
+    "Brand.dc.html": { "x": 0, "y": 3404, "w": 1280, "h": 800, "title": "Brand" }
+  },
+  "order": [
+    "SignIn.dc.html",
+    "Main.dc.html",
+    "RunWork.dc.html",
+    "RunRest.dc.html",
+    "Done.dc.html",
+    "LiveWork.dc.html",
+    "LiveRest.dc.html",
+    "Island.dc.html",
+    "Dashboard.dc.html",
+    "RunDetail.dc.html",
+    "Brand.dc.html"
+  ],
+  "notes": {
+    "app": { "x": 0, "y": -300, "text": "iPhone app", "kind": "title1", "maxW": 2270 },
+    "lock": { "x": 0, "y": 964, "text": "Lock screen and Dynamic Island", "kind": "title1", "maxW": 1600 },
+    "web": { "x": 0, "y": 1804, "text": "Web: pacebeep.vercel.app", "kind": "title1", "maxW": 2640 }
+  },
+  "designSystems": []
+}

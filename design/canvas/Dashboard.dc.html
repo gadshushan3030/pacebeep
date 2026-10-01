@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>PaceBeep dashboard</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#121316}a:hover{color:#3a3d44}
+</style>
+</helmet>
+<div style="min-height: 1180px; background: #F5F4F0; color: #121316; font-family: 'Archivo', 'Helvetica Neue', system-ui, sans-serif">
+  <div style="max-width: 1120px; margin: 0 auto; padding: 28px 24px 64px; display: flex; flex-direction: column; gap: 36px">
+    <header style="display: flex; align-items: center; gap: 20px; flex-wrap: wrap">
+      <div style="display: flex; align-items: center; gap: 10px">
+        <svg width="32" height="32" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#E4572E"></rect><path d="M8 36h12l5-14 8 26 6-18 4 6h13" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+        <span style="font-size: 23px; font-weight: 800; font-stretch: 80%">PaceBeep</span>
+      </div>
+      <nav aria-label="Main" style="display: flex; gap: 4px">
+        <a href="Dashboard.dc.html" aria-current="page" style="min-height: 44px; box-sizing: border-box; padding: 0 14px; display: flex; align-items: center; border-radius: 12px; background: #121316; color: #F5F4F0; text-decoration: none; font-weight: 600">Dashboard</a>
+        <a href="#workouts" style="min-height: 44px; box-sizing: border-box; padding: 0 14px; display: flex; align-items: center; border-radius: 12px; text-decoration: none; font-weight: 600">Workouts</a>
+        <a href="#account" style="min-height: 44px; box-sizing: border-box; padding: 0 14px; display: flex; align-items: center; border-radius: 12px; text-decoration: none; font-weight: 600">Account</a>
+      </nav>
+      <div style="margin-left: auto; display: flex; align-items: center; gap: 12px">
+        <span style="font-size: 14px; color: #5C5F66">you@example.com</span>
+        <button type="button" style="min-height: 44px; padding: 0 14px; border-radius: 12px; border: 1px solid #D6D3CB; background: transparent; font: inherit; font-size: 14px; font-weight: 600; color: #121316; cursor: pointer">Sign out</button>
+      </div>
+    </header>
+
+    <section aria-labelledby="week" style="display: flex; flex-direction: column; gap: 16px">
+      <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap">
+        <h1 id="week" style="margin: 0; font-size: 52px; line-height: 1; font-weight: 800; font-stretch: 70%">This week</h1>
+        <span style="font-size: 15px; color: #5C5F66">5–11 Oct · planned by ChatGPT</span>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(132px, 100%), 1fr)); gap: 10px">
+        <div style="min-height: 150px; box-sizing: border-box; padding: 14px; border: 1.5px dashed #CFCBC2; border-radius: 18px; display: flex; flex-direction: column; gap: 8px">
+          <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.08em; color: #5C5F66">MON 5</span>
+          <span style="font-size: 14px; color: #5C5F66">Rest day</span>
+        </div>
+        <div style="min-height: 150px; box-sizing: border-box; padding: 14px; border-radius: 18px; background: #121316; color: #F5F4F0; display: flex; flex-direction: column; gap: 8px">
+          <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.08em; color: #F07A55">TUE 6 · TODAY</span>
+          <span style="font-size: 20px; line-height: 1.05; font-weight: 800; font-stretch: 76%">6 × 2:00 / 1:00</span>
+          <span style="font-size: 13px; color: #C9CBD0">27 min · 4:30 /km</span>
+          <span style="margin-top: auto; align-self: flex-start; padding: 4px 10px; border-radius: 999px; background: #F5F4F0; color: #121316; font-size: 12px; font-weight: 700">Done · RPE 7</span>
+        </div>
+        <div style="min-height: 150px; box-sizing: border-box; padding: 14px; border: 1.5px dashed #CFCBC2; border-radius: 18px; display: flex; flex-direction: column; gap: 8px">
+          <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.08em; color: #5C5F66">WED 7</span>
+          <span style="font-size: 14px; color: #5C5F66">Rest day</span>
+        </div>
+        <div style="min-height: 150px; box-sizing: border-box; padding: 14px; border: 1px solid #E3E1DB; border-radius: 18px; background: #FFFFFF; display: flex; flex-direction: column; gap: 8px">
+          <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.08em; color: #5C5F66">THU 8</span>
+          <span style="font-size: 20px; line-height: 1.05; font-weight: 800; font-stretch: 76%">5 × 3:00 / 1:30</span>
+          <span style="font-size: 13px; color: #5C5F66">32 min · 4:20 /km</span>
+        </div>
+        <div style="min-height: 150px; box-sizing: border-box; padding: 14px; border: 1.5px dashed #CFCBC2; border-radius: 18px; display: flex; flex-direction: column; gap: 8px">
+          <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.08em; color: #5C5F66">FRI 9</span>
+          <span style="font-size: 14px; color: #5C5F66">Rest day</span>
+        </div>
+        <div style="min-height: 150px; box-sizing: border-box; padding: 14px; border: 1px solid #E3E1DB; border-radius: 18px; background: #FFFFFF; display: flex; flex-direction: column; gap: 8px">
+          <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.08em; color: #5C5F66">SAT 10</span>
+          <span style="font-size: 20px; line-height: 1.05; font-weight: 800; font-stretch: 76%">Easy 30</span>
+          <span style="font-size: 13px; color: #5C5F66">30 min · 6:00 /km</span>
+        </div>
+        <div style="min-height: 150px; box-sizing: border-box; padding: 14px; border: 1.5px dashed #CFCBC2; border-radius: 18px; display: flex; flex-direction: column; gap: 8px">
+          <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.08em; color: #5C5F66">SUN 11</span>
+          <span style="font-size: 14px; color: #5C5F66">Rest day</span>
+        </div>
+      </div>
+    </section>
+
+    <section aria-label="Totals" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr)); gap: 12px">
+      <div style="padding: 18px 20px; background: #FFFFFF; border: 1px solid #E3E1DB; border-radius: 20px; display: flex; flex-direction: column; gap: 4px">
+        <span style="font-size: 40px; line-height: 1; font-weight: 800; font-stretch: 70%; font-variant-numeric: tabular-nums">1</span>
+        <span style="font-size: 14px; color: #5C5F66">runs, last 7 days</span>
+      </div>
+      <div style="padding: 18px 20px; background: #FFFFFF; border: 1px solid #E3E1DB; border-radius: 20px; display: flex; flex-direction: column; gap: 4px">
+        <span style="font-size: 40px; line-height: 1; font-weight: 800; font-stretch: 70%; font-variant-numeric: tabular-nums">4</span>
+        <span style="font-size: 14px; color: #5C5F66">runs, last 30 days</span>
+      </div>
+      <div style="padding: 18px 20px; background: #FFFFFF; border: 1px solid #E3E1DB; border-radius: 20px; display: flex; flex-direction: column; gap: 4px">
+        <span style="font-size: 40px; line-height: 1; font-weight: 800; font-stretch: 70%; font-variant-numeric: tabular-nums">1:58</span>
+        <span style="font-size: 14px; color: #5C5F66">hours running, last 30 days</span>
+      </div>
+    </section>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(440px, 100%), 1fr)); gap: 28px; align-items: start">
+      <section aria-labelledby="runs" style="display: flex; flex-direction: column; gap: 12px">
+        <h2 id="runs" style="margin: 0; font-size: 28px; font-weight: 800; font-stretch: 76%">Recent runs</h2>
+        <ul style="margin: 0; padding: 0; list-style: none; background: #FFFFFF; border: 1px solid #E3E1DB; border-radius: 20px; overflow: hidden">
+          <li style="border-bottom: 1px solid #E3E1DB">
+            <a href="RunDetail.dc.html" style="min-height: 72px; box-sizing: border-box; padding: 12px 18px; display: flex; align-items: center; gap: 16px; text-decoration: none">
+              <span style="width: 44px; display: flex; flex-direction: column; align-items: center"><span style="font-size: 11px; font-weight: 700; letter-spacing: 0.06em; color: #5C5F66">TUE</span><span style="font-size: 24px; line-height: 1; font-weight: 800; font-stretch: 75%">6</span></span>
+              <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 3px"><span style="font-size: 17px; font-weight: 700">6 × 2:00 / 1:00</span><span style="font-size: 13px; color: #5C5F66">Recorded by your phone · 27:03</span></span>
+              <span style="padding: 5px 10px; border-radius: 999px; border: 1.5px solid #121316; font-size: 13px; font-weight: 700">RPE 7</span>
+            </a>
+          </li>
+          <li style="border-bottom: 1px solid #E3E1DB">
+            <a href="RunDetail.dc.html" style="min-height: 72px; box-sizing: border-box; padding: 12px 18px; display: flex; align-items: center; gap: 16px; text-decoration: none">
+              <span style="width: 44px; display: flex; flex-direction: column; align-items: center"><span style="font-size: 11px; font-weight: 700; letter-spacing: 0.06em; color: #5C5F66">SAT</span><span style="font-size: 24px; line-height: 1; font-weight: 800; font-stretch: 75%">3</span></span>
+              <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 3px"><span style="font-size: 17px; font-weight: 700">Easy 30</span><span style="font-size: 13px; color: #5C5F66">You told your coach · 31:10</span></span>
+              <span style="padding: 5px 10px; border-radius: 999px; border: 1.5px solid #121316; font-size: 13px; font-weight: 700">RPE 4</span>
+            </a>
+          </li>
+          <li>
+            <a href="RunDetail.dc.html" style="min-height: 72px; box-sizing: border-box; padding: 12px 18px; display: flex; align-items: center; gap: 16px; text-decoration: none">
+              <span style="width: 44px; display: flex; flex-direction: column; align-items: center"><span style="font-size: 11px; font-weight: 700; letter-spacing: 0.06em; color: #5C5F66">THU</span><span style="font-size: 24px; line-height: 1; font-weight: 800; font-stretch: 75%">1</span></span>
+              <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 3px"><span style="font-size: 17px; font-weight: 700">5 × 3:00 / 1:30</span><span style="font-size: 13px; color: #5C5F66">Recorded by your phone · 32:00</span></span>
+              <span style="padding: 5px 10px; border-radius: 999px; border: 1.5px solid #121316; font-size: 13px; font-weight: 700">RPE 8</span>
+            </a>
+          </li>
+        </ul>
+      </section>
+
+      <section aria-labelledby="connected" style="display: flex; flex-direction: column; gap: 12px">
+        <h2 id="connected" style="margin: 0; font-size: 28px; font-weight: 800; font-stretch: 76%">Connected</h2>
+        <ul style="margin: 0; padding: 0; list-style: none; background: #FFFFFF; border: 1px solid #E3E1DB; border-radius: 20px; overflow: hidden">
+          <li style="min-height: 76px; box-sizing: border-box; padding: 14px 18px; display: flex; align-items: center; gap: 14px; border-bottom: 1px solid #E3E1DB">
+            <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 3px">
+              <span style="font-size: 17px; font-weight: 700">ChatGPT</span>
+              <span style="font-size: 13px; color: #5C5F66">Plans your workouts, reads your runs · allowed 30 Sep</span>
+            </span>
+            <button type="button" style="min-height: 44px; padding: 0 14px; border-radius: 12px; border: 1px solid #D6D3CB; background: transparent; font: inherit; font-size: 14px; font-weight: 600; color: #121316; cursor: pointer">Disconnect</button>
+          </li>
+          <li style="min-height: 76px; box-sizing: border-box; padding: 14px 18px; display: flex; align-items: center; gap: 14px">
+            <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 3px">
+              <span style="font-size: 17px; font-weight: 700">PaceBeep iPhone</span>
+              <span style="font-size: 13px; color: #5C5F66">Plays workouts, sends runs and RPE · allowed 1 Oct</span>
+            </span>
+            <button type="button" style="min-height: 44px; padding: 0 14px; border-radius: 12px; border: 1px solid #D6D3CB; background: transparent; font: inherit; font-size: 14px; font-weight: 600; color: #121316; cursor: pointer">Disconnect</button>
+          </li>
+        </ul>
+        <p style="margin: 0; font-size: 14px; line-height: 1.45; color: #5C5F66">Disconnect cuts that app off at once. Your other connections keep working.</p>
+      </section>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":1180}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

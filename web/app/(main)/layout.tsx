@@ -1,29 +1,27 @@
 import Link from "next/link";
 import { logout } from "@/app/actions";
+import { Mark } from "@/app/Mark";
 import { requireUser } from "@/lib/session";
-
-const NAV = [
-  { href: "/", label: "Dashboard" },
-  { href: "/workouts", label: "Workouts" },
-  { href: "/account", label: "Account" },
-] as const;
+import { Nav } from "./Nav";
 
 export default async function MainLayout({ children }: LayoutProps<"/">) {
   const user = await requireUser();
   return (
-    <div className="mx-auto flex max-w-2xl flex-col gap-5 px-4 pb-10 pt-[max(1rem,env(safe-area-inset-top))]">
-      <nav className="flex items-center gap-1">
-        {NAV.map((n) => (
-          <Link key={n.href} href={n.href} className="rounded-xl px-3 py-2.5 font-medium hover:bg-black/5 dark:hover:bg-white/10">
-            {n.label}
-          </Link>
-        ))}
-        <span className="muted ms-auto hidden text-sm sm:inline">{user.email}</span>
-        <form action={logout}>
-          <button className="muted rounded-xl px-3 py-2.5 text-sm hover:bg-black/5 dark:hover:bg-white/10">Sign out</button>
-        </form>
-      </nav>
-      <main className="flex flex-col gap-5">{children}</main>
+    <div className="mx-auto flex max-w-[1120px] flex-col gap-9 px-5 pb-16 pt-[max(1.75rem,env(safe-area-inset-top))] sm:px-6">
+      <header className="flex flex-wrap items-center gap-x-5 gap-y-3">
+        <Link href="/" className="flex items-center gap-2.5">
+          <Mark size={32} />
+          <span className="display text-[23px] [font-stretch:80%]">PaceBeep</span>
+        </Link>
+        <Nav />
+        <div className="ms-auto flex items-center gap-3">
+          <span className="muted hidden text-sm sm:inline">{user.email}</span>
+          <form action={logout}>
+            <button className="btn btn-ghost text-sm">Sign out</button>
+          </form>
+        </div>
+      </header>
+      <main className="flex flex-col gap-9">{children}</main>
     </div>
   );
 }
