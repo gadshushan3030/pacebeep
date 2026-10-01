@@ -77,7 +77,7 @@ The whole workout is rendered into one audio track (silence with the beeps at th
 2. **Storage → Create Database → Neon (Free)**, connect it to the project with env prefix `DATABASE` (gives `DATABASE_URL`).
 3. Environment variables: `BETTER_AUTH_SECRET` (`openssl rand -hex 32`), `BETTER_AUTH_URL` (your production URL), optionally `SIGNUP_ENABLED`.
 4. Optional Google sign-in: in Google Cloud create a project, configure the Google Auth Platform (External), and a **Web application** OAuth client with redirect URI `https://<your-app>/api/auth/callback/google`; set `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`. While the app is in "Testing", only listed test users can sign in; to publish, fill the Branding page (home page, `/privacy`, `/terms`) and click **Publish app** – with only the basic `openid email profile` scopes and no logo, no Google verification is needed.
-5. Deploy. The build (`vercel-build`) applies `web/db/migrations/*.sql` before `next build`.
+5. Deploy. The build (`vercel-build`) applies `web/db/migrations/*.sql` before `next build`. Only production builds run (`web/vercel.json` skips previews): the environment variables are production-only, and giving previews the production `DATABASE_URL` would let any branch migrate the production database.
 
 ## Connect ChatGPT
 
