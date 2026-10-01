@@ -62,6 +62,22 @@ export function createWorkout(userId: string, requestId: string, input: WorkoutI
   return insertOnce("workouts", userId, requestId, { ...input, source });
 }
 
+// A new account starts with these, so the app has something to play before an assistant is
+// connected (an App Store reviewer included). Unscheduled, so they never fall off the app's list;
+// created oldest first because the app shows unscheduled workouts newest first.
+const starterWorkouts: WorkoutInput[] = [
+  { name: "Easy 20", warmup_sec: 0, repeats: 1, work_sec: 1200, rest_sec: 0, cooldown_sec: 0 },
+  { name: "6 × 1:00 / 1:00", warmup_sec: 300, repeats: 6, work_sec: 60, rest_sec: 60, cooldown_sec: 300 },
+  {
+    name: "First intervals", warmup_sec: 60, repeats: 3, work_sec: 30, rest_sec: 30, cooldown_sec: 60,
+    notes: "A short one to try: a beep at every change, also with the screen locked.",
+  },
+];
+
+export async function addStarterWorkouts(userId: string) {
+  for (const [i, workout] of starterWorkouts.entries()) await createWorkout(userId, `starter-${i}`, workout, "app");
+}
+
 export async function updateWorkout(userId: string, workoutId: string, patch: Partial<WorkoutInput>) {
   const cols = Object.keys(patch).filter((c) => patch[c as keyof WorkoutInput] !== undefined);
   if (!cols.length) throw new Error("nothing to update");
