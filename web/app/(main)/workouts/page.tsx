@@ -15,7 +15,7 @@ export default async function WorkoutsPage() {
         {workouts.map((w) => (
           <li key={w.id} className="flex items-center gap-3 px-4 py-3">
             <div className="min-w-0 flex-1">
-              <div className="font-medium">
+              <div dir="auto" className="font-medium">
                 {w.name} {w.source === "assistant" && <span className="muted text-xs">· by assistant</span>}
               </div>
               <div className="muted text-sm">

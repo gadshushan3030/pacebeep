@@ -69,3 +69,25 @@ func dayFormat(_ pattern: String) -> DateFormatter {
     f.dateFormat = pattern
     return f
 }
+
+extension String {
+    /// True when the first letter is right-to-left (Hebrew, Arabic): a workout the coach named in Hebrew.
+    var isRightToLeft: Bool {
+        for scalar in unicodeScalars {
+            switch scalar.value {
+            case 0x0590...0x08FF, 0xFB1D...0xFDFF, 0xFE70...0xFEFF: return true
+            case 0x41...0x5A, 0x61...0x7A, 0xC0...0x24F: return false
+            default: continue
+            }
+        }
+        return false
+    }
+}
+
+extension View {
+    /// Coach text in its own direction: Hebrew aligns right even inside the English UI.
+    func direction(of text: String) -> some View {
+        frame(maxWidth: .infinity, alignment: .leading)
+            .environment(\.layoutDirection, text.isRightToLeft ? .rightToLeft : .leftToRight)
+    }
+}

@@ -40,7 +40,7 @@ struct DoneView: View {
 
     private func summaryCard(_ s: Runner.Summary) -> some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text(s.workout.name).font(.display(20))
+            Text(s.workout.name).font(.display(20)).direction(of: s.workout.name)
             HStack(alignment: .top) {
                 value(clock(s.seconds), "time")
                 value("\(s.repsDone) / \(s.reps)", "reps")

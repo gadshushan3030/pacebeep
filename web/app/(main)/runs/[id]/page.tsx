@@ -31,7 +31,7 @@ export default async function RunPage({ params }: PageProps<"/runs/[id]">) {
           </svg>
           Dashboard
         </Link>
-        <h1 className="display text-[56px] [font-stretch:68%]">{run.workout_name ?? "Free run"}</h1>
+        <h1 dir="auto" className="display text-[56px] [font-stretch:68%]">{run.workout_name ?? "Free run"}</h1>
         <p className="muted">
           {new Date(run.started_at).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", timeZone: TZ })} ·{" "}
           {time(run.started_at)} to {time(run.ended_at)} · {run.source === "device" ? "recorded by your phone" : "you told your coach"}
@@ -90,7 +90,7 @@ export default async function RunPage({ params }: PageProps<"/runs/[id]">) {
               <p className="text-lg font-bold">Not rated</p>
             )}
             {notes.map((f) => (
-              <p key={f.id} className="leading-relaxed">{f.notes}</p>
+              <p key={f.id} dir="auto" className="leading-relaxed">{f.notes}</p>
             ))}
             <p className="text-[13px] leading-relaxed text-[var(--on-inverse-muted)]">Your own rating, kept apart from the measured times.</p>
           </section>

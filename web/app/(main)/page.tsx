@@ -62,7 +62,7 @@ export default async function Dashboard() {
                 <span className={`eyebrow ${isToday ? "!text-[var(--signal-text)]" : ""}`}>{label}</span>
                 {planned.map((w) => (
                   <div key={w.id} className="flex flex-1 flex-col gap-1.5">
-                    <span className="display text-xl leading-[1.05] [font-stretch:76%]">{w.name}</span>
+                    <span dir="auto" className="display text-xl leading-[1.05] [font-stretch:76%]">{w.name}</span>
                     <span className={`text-[13px] ${isToday ? "text-[var(--on-inverse-muted)]" : "muted"}`}>
                       {Math.round(totalSec(w) / 60)} min{w.target_pace_sec_per_km && ` · ${fmtDuration(w.target_pace_sec_per_km)} /km`}
                     </span>
@@ -94,7 +94,7 @@ export default async function Dashboard() {
                 <Link href={`/runs/${r.id}`} className="flex min-h-[72px] items-center gap-4 px-[18px] py-3 hover:bg-black/[0.03] dark:hover:bg-white/5">
                   <DateStack date={r.started_at} />
                   <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-                    <span className="text-[17px] font-bold">{r.workout_name ?? "Free run"}</span>
+                    <span dir="auto" className="text-[17px] font-bold">{r.workout_name ?? "Free run"}</span>
                     <span className="muted text-[13px]">
                       {r.source === "device" ? "Recorded by your phone" : "You told your coach"} ·{" "}
                       {fmtDuration(Math.round((new Date(r.ended_at).getTime() - new Date(r.started_at).getTime()) / 1000))}

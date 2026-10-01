@@ -92,7 +92,8 @@ private struct NextCard: View {
                 Spacer()
                 Text("From your coach").font(.footnote).foregroundStyle(Color(hex: 0xB9BCC3))
             }
-            Text(workout.name).font(.display(46)).lineLimit(2).minimumScaleFactor(0.6)
+            // Long names (a coach writing a whole title) get a smaller size instead of a third line.
+            Text(workout.name).font(.display(workout.name.count > 18 ? 34 : 46)).lineLimit(3).minimumScaleFactor(0.6).direction(of: workout.name)
             HStack(spacing: 20) {
                 stat("\(Int((workout.total / 60).rounded()))", "min")
                 if let pace = workout.pace { stat(pace, "/km") }
@@ -100,7 +101,7 @@ private struct NextCard: View {
             }
             Strip(parts: workout.parts, height: 10) { _, part in Theme.planColor(part.kind, onDark: true) }
             if let notes = workout.notes, !notes.isEmpty {
-                Text(notes).font(.system(size: 15)).foregroundStyle(Color(hex: 0xD5D7DC))
+                Text(notes).font(.system(size: 15)).foregroundStyle(Color(hex: 0xD5D7DC)).direction(of: notes)
             }
             Button(action: start) {
                 Label("Start", systemImage: "play.fill").font(.system(size: 19, weight: .heavy))
@@ -136,7 +137,7 @@ private struct WorkoutRow: View {
                 }
                 .frame(width: 44)
                 VStack(alignment: .leading, spacing: 3) {
-                    Text(workout.name).font(.display(18))
+                    Text(workout.name).font(.display(18)).direction(of: workout.name)
                     Text([ "\(Int((workout.total / 60).rounded())) min", workout.paceText ].compactMap { $0 }.joined(separator: " · "))
                         .font(.footnote).foregroundStyle(Theme.muted)
                 }
