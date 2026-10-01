@@ -9,6 +9,7 @@
     "lint": "eslint",
     "db:up": "docker start pacebeep-db 2>/dev/null || docker run -d --name pacebeep-db -p 55433:5432 -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=pacebeep -v pacebeep-db:/var/lib/postgresql/data postgres:17-alpine",
     "db:migrate": "node --env-file-if-exists=.env.local scripts/migrate.mts",
+    "demo:account": "node --env-file-if-exists=.env.local scripts/demo-account.mts",
     "vercel-build": "node scripts/migrate.mts && next build"
   },
   "dependencies": {

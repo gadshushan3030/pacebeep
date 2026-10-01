@@ -52,8 +52,13 @@ struct HomeView: View {
                 ForEach([error, coach.message].compactMap { $0 }, id: \.self) {
                     Text($0).font(.footnote).foregroundStyle(Theme.muted)
                 }
-                // Explicit red: the VStack's ink foreground would override the destructive role's.
-                Button("Sign out", role: .destructive) { coach.signOut() }.font(.footnote).foregroundStyle(Theme.bad)
+                HStack(spacing: 20) {
+                    // Explicit red: the VStack's ink foreground would override the destructive role's.
+                    Button("Sign out", role: .destructive) { coach.signOut() }.foregroundStyle(Theme.bad)
+                    // App Store rule 5.1.1(v): account deletion reachable from the app. The web page does it.
+                    Link("Delete account", destination: Auth.server.appending(path: "account")).foregroundStyle(Theme.muted)
+                }
+                .font(.footnote)
             }
             .foregroundStyle(Theme.ink)
             .padding(.horizontal, 20)

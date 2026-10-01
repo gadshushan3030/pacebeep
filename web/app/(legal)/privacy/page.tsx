@@ -8,7 +8,7 @@ export default function Privacy() {
   return (
     <>
       <h1>Privacy Policy</h1>
-      <p className="muted text-sm">Last updated: 30 September 2026</p>
+      <p className="muted text-sm">Last updated: 1 October 2026</p>
 
       <p>
         PaceBeep is an open-source interval-running app run by Gad Shushan. This page explains what data PaceBeep keeps, why, who
@@ -17,7 +17,7 @@ export default function Privacy() {
 
       <h2>What we collect</h2>
       <ul>
-        <li><strong>Account:</strong> your email address and name. If you sign in with Google, also your Google account id and profile picture link. If you use a password, only a one-way hash of it.</li>
+        <li><strong>Account:</strong> your email address and name. If you sign in with Google, also your Google account id and profile picture link. If you sign in with Apple, also your Apple account id; the email may be a private relay address from Apple. If you use a password, only a one-way hash of it.</li>
         <li><strong>Sign-in sessions:</strong> a session cookie, and the IP address and browser/device description of each session.</li>
         <li><strong>Training data you or your assistant add:</strong> workout plans, runs (times, distance, per-interval durations and pace), and your feedback (effort rating and notes).</li>
         <li><strong>Assistant connections:</strong> which AI assistants you approved, when, and the access and refresh tokens issued to them.</li>
@@ -41,6 +41,12 @@ export default function Privacy() {
         , including the Limited Use requirements. We do not access your Gmail, Drive, contacts or any other Google data.
       </p>
 
+      <h2>Sign in with Apple</h2>
+      <p>
+        When you choose &ldquo;Continue with Apple&rdquo;, Apple shares an account id, your email address (your own or, if you choose
+        to hide it, a relay address that forwards to you) and, the first time only, your name. We use them only to create and identify
+        your account.
+      </p>
       <h2>AI assistants you connect</h2>
       <p>
         If you connect an assistant (for example ChatGPT), you approve it on a consent screen, and it can then read and change your
@@ -54,6 +60,7 @@ export default function Privacy() {
         <li><strong>Vercel</strong> – hosts the app (United States).</li>
         <li><strong>Neon</strong> – hosts the database (United States, us-east-1).</li>
         <li><strong>Google</strong> – only if you use Google sign-in.</li>
+        <li><strong>Apple</strong> – only if you use Sign in with Apple.</li>
       </ul>
       <p>We share data with no one else, unless the law requires it.</p>
 

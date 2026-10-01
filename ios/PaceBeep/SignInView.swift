@@ -21,7 +21,7 @@ struct SignInView: View {
                 }
                 Button("Sign in to PaceBeep") { Task { await coach.signIn() } }
                     .buttonStyle(BigButtonStyle())
-                Text("Opens \(Auth.server.host() ?? "the PaceBeep site") · Google or email")
+                Text("Opens \(Auth.server.host() ?? "the PaceBeep site") · Apple, Google or email")
                     .font(.footnote).foregroundStyle(Theme.muted)
                 Button("Try a 2-minute test first") { start(.quickTest) }
                     .font(.system(size: 16, weight: .semibold))
