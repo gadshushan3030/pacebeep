@@ -3,7 +3,7 @@
 Interval running with an AI coach. Plan interval workouts, record runs, and let your assistant (ChatGPT, Claude or any MCP client) read your training and write plans, over OAuth.
 
 - **web/** – Next.js 16 backend and dashboard: accounts, workouts, runs, and an MCP server at `/mcp`.
-- **ios/** – SwiftUI prototype: an interval timer whose beeps keep playing with the screen locked. No backend sync yet.
+- **ios/** – SwiftUI prototype: an interval timer whose beeps keep playing with the screen locked, with a Live Activity (lock screen and Dynamic Island). No backend sync yet.
 - **docs/AGENT_BRIEF.md** – architecture and the brief for coding agents working on this repo.
 
 The auth + MCP layer is also available on its own as a clean template: **[MCP OAuth Starter](https://github.com/gadshushan3030/mcp-oauth-starter)**. Single-owner sibling project: [English Coach](https://github.com/gadshushan3030/english-coach-mcp).

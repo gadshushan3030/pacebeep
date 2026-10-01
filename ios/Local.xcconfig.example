@@ -1,3 +1,3 @@
 // Your Apple team (Xcode → Settings → Accounts) and a bundle id no one else has registered.
 DEVELOPMENT_TEAM = ABCDE12345
-PRODUCT_BUNDLE_IDENTIFIER = com.yourname.PaceBeep
+APP_BUNDLE_ID = com.yourname.PaceBeep

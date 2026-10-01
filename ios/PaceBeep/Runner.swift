@@ -1,3 +1,4 @@
+import ActivityKit
 import AVFoundation
 import Observation
 
@@ -23,6 +24,8 @@ final class Runner {
     @ObservationIgnored private var lateness: [Double] = []
     @ObservationIgnored private var interruptions = 0
     @ObservationIgnored private var interrupted = false
+    @ObservationIgnored private var activity: Activity<WorkoutActivity>?
+    @ObservationIgnored private var shownSegment: Int?
 
     init() {
         // A phone call or Siri pauses the player; resume when iOS says so.
@@ -76,6 +79,8 @@ final class Runner {
         pausedTotal = 0
         startedAt = Date()
         state = .running
+        shownSegment = 0
+        updateActivity() // must start while the app is in the foreground
         let t = Timer(timeInterval: 0.2, repeats: true) { [weak self] _ in self?.tick() }
         RunLoop.main.add(t, forMode: .common)
         timer = t
@@ -89,6 +94,11 @@ final class Runner {
             return
         }
         elapsed = player.currentTime
+        let index = workout.segment(at: elapsed)?.index
+        if index != shownSegment {
+            shownSegment = index
+            if index == nil { endActivity() } else { updateActivity() }
+        }
         // Voice runs on this timer, beeps are in the track. If iOS froze the app with the screen
         // locked, the beeps would still be on time and the voice would come late (see report).
         while nextCue < cues.count, cues[nextCue].time + cues[nextCue].beep.tone.seconds <= elapsed {
@@ -107,6 +117,8 @@ final class Runner {
         player?.pause()
         pausedAt = Date()
         state = .paused
+        elapsed = player?.currentTime ?? elapsed
+        updateActivity()
     }
 
     func resume() {
@@ -115,18 +127,46 @@ final class Runner {
         try? AVAudioSession.sharedInstance().setActive(true)
         player?.play()
         state = .running
+        elapsed = player?.currentTime ?? elapsed
+        updateActivity()
     }
 
     func stop() {
         timer?.invalidate()
         player?.stop()
         synth.stopSpeaking(at: .immediate)
+        endActivity()
         workout = nil
         state = .idle
     }
 
+    /// Sent on start, at each new segment and on pause/resume; iOS ticks the countdown in between.
+    private func updateActivity() {
+        guard let workout, let current = workout.segment(at: elapsed) else { return }
+        let now = Date()
+        let content = ActivityContent(state: WorkoutActivity.ContentState(
+            title: current.segment.title,
+            isWork: current.segment.isWork,
+            start: now - (current.segment.seconds - current.remaining),
+            end: now + current.remaining,
+            pausedAt: state == .paused ? now : nil
+        ), staleDate: nil)
+        if let activity {
+            Task { await activity.update(content) }
+        } else {
+            activity = try? Activity.request(attributes: WorkoutActivity(workoutName: workout.name), content: content)
+        }
+    }
+
+    private func endActivity() {
+        let ending = activity
+        activity = nil
+        Task { await ending?.end(nil, dismissalPolicy: .immediate) }
+    }
+
     private func finish() {
         timer?.invalidate()
+        endActivity()
         let wall = Date().timeIntervalSince(startedAt) - pausedTotal
         let audio = player?.duration ?? 0
         let gap = wall - audio

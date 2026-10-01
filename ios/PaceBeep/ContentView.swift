@@ -35,7 +35,7 @@ struct ContentView: View {
             case .running, .paused:
                 if let w = runner.workout {
                     let current = w.segment(at: runner.elapsed)
-                    Text(current?.0.title ?? "Finishing").font(.title.bold())
+                    Text(current?.segment.title ?? "Finishing").font(.title.bold())
                     // Rounded up, so the pips before a run land on 3, 2, 1.
                     Text(clock((current?.remaining ?? 0).rounded(.up)))
                         .font(.system(size: 96, weight: .bold, design: .rounded).monospacedDigit())
@@ -54,6 +54,6 @@ struct ContentView: View {
         }
         .padding()
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(runner.state == .running && runner.workout?.segment(at: runner.elapsed)?.0.isWork == true ? Color.orange.opacity(0.25) : .clear)
+        .background(runner.state == .running && runner.workout?.segment(at: runner.elapsed)?.segment.isWork == true ? Color.orange.opacity(0.25) : .clear)
     }
 }

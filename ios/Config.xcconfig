@@ -1,3 +1,5 @@
 // Signing for a real iPhone: copy Local.xcconfig.example to Local.xcconfig (gitignored) and fill it in.
-PRODUCT_BUNDLE_IDENTIFIER = dev.pacebeep.PaceBeep
+APP_BUNDLE_ID = dev.pacebeep.PaceBeep
 #include? "Local.xcconfig"
+// The widget extension overrides this with $(APP_BUNDLE_ID).Widget.
+PRODUCT_BUNDLE_IDENTIFIER = $(APP_BUNDLE_ID)

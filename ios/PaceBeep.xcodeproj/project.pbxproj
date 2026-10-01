@@ -6,10 +6,40 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		7A0000000000000000000016 /* PaceBeepWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 7A0000000000000000000012 /* PaceBeepWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		7A0000000000000000000018 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 7A0000000000000000000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 7A000000000000000000001A;
+			remoteInfo = PaceBeepWidget;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		7A0000000000000000000017 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				7A0000000000000000000016 /* PaceBeepWidget.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
 		7A0000000000000000000004 /* PaceBeep.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PaceBeep.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		7A0000000000000000000005 /* Config.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config.xcconfig; sourceTree = "<group>"; };
 		7A0000000000000000000006 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		7A0000000000000000000012 /* PaceBeepWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = PaceBeepWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		7A0000000000000000000013 /* PaceBeepWidget-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "PaceBeepWidget-Info.plist"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -18,10 +48,27 @@
 			path = PaceBeep;
 			sourceTree = "<group>";
 		};
+		7A0000000000000000000014 /* PaceBeepWidget */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = PaceBeepWidget;
+			sourceTree = "<group>";
+		};
+		7A0000000000000000000015 /* Shared */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Shared;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		7A000000000000000000000A /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		7A000000000000000000001C /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -35,8 +82,11 @@
 			isa = PBXGroup;
 			children = (
 				7A0000000000000000000007 /* PaceBeep */,
+				7A0000000000000000000014 /* PaceBeepWidget */,
+				7A0000000000000000000015 /* Shared */,
 				7A0000000000000000000005 /* Config.xcconfig */,
 				7A0000000000000000000006 /* Info.plist */,
+				7A0000000000000000000013 /* PaceBeepWidget-Info.plist */,
 				7A0000000000000000000003 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -45,6 +95,7 @@
 			isa = PBXGroup;
 			children = (
 				7A0000000000000000000004 /* PaceBeep.app */,
+				7A0000000000000000000012 /* PaceBeepWidget.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -59,18 +110,42 @@
 				7A0000000000000000000009 /* Sources */,
 				7A000000000000000000000A /* Frameworks */,
 				7A000000000000000000000B /* Resources */,
+				7A0000000000000000000017 /* Embed Foundation Extensions */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				7A0000000000000000000019 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				7A0000000000000000000007 /* PaceBeep */,
+				7A0000000000000000000015 /* Shared */,
+			);
+			name = PaceBeep;
+			productName = PaceBeep;
+			productReference = 7A0000000000000000000004 /* PaceBeep.app */;
+			productType = "com.apple.product-type.application";
+		};
+		7A000000000000000000001A /* PaceBeepWidget */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 7A000000000000000000001E /* Build configuration list for PBXNativeTarget "PaceBeepWidget" */;
+			buildPhases = (
+				7A000000000000000000001B /* Sources */,
+				7A000000000000000000001C /* Frameworks */,
+				7A000000000000000000001D /* Resources */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				7A0000000000000000000007 /* PaceBeep */,
+				7A0000000000000000000014 /* PaceBeepWidget */,
+				7A0000000000000000000015 /* Shared */,
 			);
-			name = PaceBeep;
-			productName = PaceBeep;
-			productReference = 7A0000000000000000000004 /* PaceBeep.app */;
-			productType = "com.apple.product-type.application";
+			name = PaceBeepWidget;
+			productName = PaceBeepWidget;
+			productReference = 7A0000000000000000000012 /* PaceBeepWidget.appex */;
+			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
 
@@ -84,6 +159,9 @@
 				TargetAttributes = {
 					7A0000000000000000000008 = {
 						CreatedOnToolsVersion = 26.0;
+					};
+					7A000000000000000000001A = {
+						CreatedOnToolsVersion = 27.0;
 					};
 				};
 			};
@@ -102,12 +180,20 @@
 			projectRoot = "";
 			targets = (
 				7A0000000000000000000008 /* PaceBeep */,
+				7A000000000000000000001A /* PaceBeepWidget */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		7A000000000000000000000B /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		7A000000000000000000001D /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -124,7 +210,22 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		7A000000000000000000001B /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		7A0000000000000000000019 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 7A000000000000000000001A /* PaceBeepWidget */;
+			targetProxy = 7A0000000000000000000018 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		7A000000000000000000000E /* Debug */ = {
@@ -212,6 +313,52 @@
 			};
 			name = Release;
 		};
+		7A000000000000000000001F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 7A0000000000000000000005 /* Config.xcconfig */;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "PaceBeepWidget-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = PaceBeep;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 0.1;
+				PRODUCT_BUNDLE_IDENTIFIER = "$(APP_BUNDLE_ID).Widget";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		7A0000000000000000000020 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 7A0000000000000000000005 /* Config.xcconfig */;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "PaceBeepWidget-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = PaceBeep;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 0.1;
+				PRODUCT_BUNDLE_IDENTIFIER = "$(APP_BUNDLE_ID).Widget";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -229,6 +376,15 @@
 			buildConfigurations = (
 				7A0000000000000000000010 /* Debug */,
 				7A0000000000000000000011 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		7A000000000000000000001E /* Build configuration list for PBXNativeTarget "PaceBeepWidget" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				7A000000000000000000001F /* Debug */,
+				7A0000000000000000000020 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

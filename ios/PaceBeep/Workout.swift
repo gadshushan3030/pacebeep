@@ -28,11 +28,11 @@ struct Workout: Identifiable {
     ]
 
     /// The segment running at time `t` and the seconds left in it.
-    func segment(at t: Double) -> (Segment, remaining: Double)? {
+    func segment(at t: Double) -> (index: Int, segment: Segment, remaining: Double)? {
         var end = 0.0
-        for s in segments {
+        for (i, s) in segments.enumerated() {
             end += s.seconds
-            if t < end { return (s, end - t) }
+            if t < end { return (i, s, end - t) }
         }
         return nil
     }
