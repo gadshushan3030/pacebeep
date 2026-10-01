@@ -4,6 +4,8 @@ Interval running with an AI coach. Your assistant (ChatGPT, Claude or any MCP cl
 
 **[pacebeep.vercel.app](https://pacebeep.vercel.app)** · [Connect ChatGPT](#connect-chatgpt) · [Run your own](#deploy-your-own-vercel--neon)
 
+The live site is open: sign in with any Google account.
+
 ![The iPhone app: today's workout from the coach, a work interval, a rest interval, and the summary with the RPE that goes back to the coach](docs/screenshots/app.png)
 
 - **web/** – Next.js 16 backend and dashboard: accounts, workouts, runs, and an MCP server at `/mcp`.
