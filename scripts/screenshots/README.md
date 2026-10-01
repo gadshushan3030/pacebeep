@@ -23,13 +23,20 @@ node scripts/screenshots/connect-chatgpt.mjs
 
 ## 2. iPhone (simulator, iPhone 17 Pro)
 
+Name the simulator by its UDID in every command, never `booted` or a model name: with several simulators running (other projects on the same Mac), those pick whichever one happens to be booted or attached, and the taps and screenshots land in someone else's app.
+
 ```bash
-xcrun simctl status_bar booted override --dataNetwork wifi --wifiBars 3 --cellularBars 4 --batteryState discharging --batteryLevel 100
-xcodebuild -project ios/PaceBeep.xcodeproj -scheme PaceBeep -destination 'platform=iOS Simulator,name=iPhone 17 Pro' \
+xcrun simctl list devices available | grep "iPhone 17 Pro ("   # pick one, then:
+export DEVICE=<its UDID>
+xcrun simctl boot $DEVICE
+xcrun simctl status_bar $DEVICE override --dataNetwork wifi --wifiBars 3 --cellularBars 4 --batteryState discharging --batteryLevel 100
+xcodebuild -project ios/PaceBeep.xcodeproj -scheme PaceBeep -destination "id=$DEVICE" \
   -derivedDataPath ios/build SERVER_URL=http://localhost:3201 build
+xcrun simctl install $DEVICE ios/build/Build/Products/Debug-iphonesimulator/PaceBeep.app
+xcrun simctl launch $DEVICE com.gadshushan3030.PaceBeep
 ```
 
-The status bar keeps the real time, so it agrees with the start time on the after-the-run screen. Install, sign in with the demo account, then `xcrun simctl io booted screenshot <file>.png`:
+An agent driving the simulator passes the same UDID as the device on every tool call. The status bar keeps the real time, so it agrees with the start time on the after-the-run screen. Sign in with the demo account, then `xcrun simctl io $DEVICE screenshot <file>.png`:
 
 | File | When |
 |---|---|
@@ -40,7 +47,7 @@ The status bar keeps the real time, so it agrees with the start time on the afte
 | `lock-rest.png` | 9:28 in (the rest after run 4) |
 | `done.png` | After 13:03, unlock, pick an RPE |
 
-On a fresh install iOS asks once, under the Live Activity, whether to allow it. While that prompt shows, the card sits higher on the lock screen (y = 1573 on iPhone 17 Pro); once it's answered, the card sits at the bottom (y = 1890). Either way the crop below takes the card alone.
+On a fresh install iOS asks once, under the Live Activity, whether to allow it. While that prompt shows, the card sits higher on the lock screen (y = 1573 on iPhone 17 Pro); once it's answered, the card sits at the bottom (y = 1890). Either way the crop below takes the card alone. When done: `xcrun simctl status_bar $DEVICE clear`.
 
 ## 3. Web
 
