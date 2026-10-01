@@ -4,6 +4,7 @@ import { betterAuth } from "better-auth";
 import { nextCookies } from "better-auth/next-js";
 import { jwt } from "better-auth/plugins";
 import { pool } from "./db";
+import { addStarterWorkouts } from "./workouts";
 
 export const MCP_RESOURCE = `${process.env.BETTER_AUTH_URL}/mcp`;
 
@@ -58,6 +59,8 @@ export const auth = betterAuth({
   ...(appleEnabled && { trustedOrigins: ["https://appleid.apple.com"] }),
   // A Google sign-in with the email of an existing account joins that account.
   account: { accountLinking: { enabled: true, trustedProviders: ["google"] } },
+  // Every new account (Apple, Google or password) gets three workouts to start with.
+  databaseHooks: { user: { create: { after: (user) => addStarterWorkouts(user.id) } } },
   // "Delete account" on the dashboard. Workouts, runs, feedback, sessions and assistant
   // connections go with it (foreign keys cascade from "user").
   user: { deleteUser: { enabled: true } },
