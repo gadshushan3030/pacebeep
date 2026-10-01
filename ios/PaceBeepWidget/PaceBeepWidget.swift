@@ -10,39 +10,58 @@ struct PaceBeepWidgets: WidgetBundle {
 struct WorkoutLiveActivity: Widget {
     var body: some WidgetConfiguration {
         ActivityConfiguration(for: WorkoutActivity.self) { context in
-            HStack {
-                VStack(alignment: .leading, spacing: 4) {
-                    Label(context.state.title, systemImage: icon(context.state)).font(.title3.bold())
-                    Text(context.state.pausedAt == nil ? context.attributes.workoutName : "Paused")
-                        .font(.subheadline).opacity(0.8)
+            let s = context.state, phase = Theme.phase(s.kind)
+            VStack(spacing: 12) {
+                HStack(alignment: .center, spacing: 12) {
+                    VStack(alignment: .leading, spacing: 3) {
+                        HStack(spacing: 6) {
+                            PhaseIcon(kind: s.kind, color: phase.text)
+                            Text(s.pausedAt == nil ? s.title : "Paused").font(.display(21))
+                        }
+                        Text(s.detail).font(.system(size: 14, weight: .semibold)).lineLimit(1)
+                    }
+                    Spacer(minLength: 0)
+                    countdown(s).font(.display(56, .compressed))
                 }
-                Spacer()
-                countdown(context.state).font(.system(size: 44, weight: .bold, design: .rounded))
+                Strip(parts: context.attributes.parts, height: 5) { i, _ in
+                    Theme.strip(on: s.kind, done: i < s.index, current: i == s.index)
+                }
             }
-            .foregroundStyle(.white)
-            .padding()
-            .activityBackgroundTint(context.state.isWork ? .orange : Color(white: 0.15))
-            .activitySystemActionForegroundColor(.white)
+            .foregroundStyle(phase.text)
+            .padding(.horizontal, 18)
+            .padding(.vertical, 16)
+            .activityBackgroundTint(phase.background)
+            .activitySystemActionForegroundColor(phase.text)
         } dynamicIsland: { context in
-            DynamicIsland {
+            let s = context.state, accent = Self.accent(s.kind)
+            return DynamicIsland {
                 DynamicIslandExpandedRegion(.leading) {
-                    Label(context.state.title, systemImage: icon(context.state)).font(.headline)
+                    HStack(spacing: 8) {
+                        PhaseIcon(kind: s.kind, color: accent)
+                        Text(s.title).font(.display(18))
+                    }
+                    .padding(.leading, 6)
                 }
                 DynamicIslandExpandedRegion(.trailing) {
-                    countdown(context.state).font(.title2.bold())
+                    countdown(s).font(.display(38, .compressed)).foregroundStyle(accent).padding(.trailing, 6)
+                }
+                DynamicIslandExpandedRegion(.bottom) {
+                    Text(s.detail).font(.system(size: 14, weight: .semibold)).foregroundStyle(.secondary)
+                        .frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal, 6)
                 }
             } compactLeading: {
-                Image(systemName: icon(context.state)).foregroundStyle(context.state.isWork ? .orange : .white)
+                PhaseIcon(kind: s.kind, color: accent)
             } compactTrailing: {
-                countdown(context.state).frame(maxWidth: 48)
+                countdown(s).font(.display(16)).foregroundStyle(accent).frame(maxWidth: 44)
             } minimal: {
-                Image(systemName: icon(context.state))
+                PhaseIcon(kind: s.kind, color: accent)
             }
         }
     }
 
-    private func icon(_ s: WorkoutActivity.ContentState) -> String {
-        s.isWork ? "figure.run" : "figure.walk"
+    /// Orange to run, light blue to rest, white otherwise (the island is always black).
+    private static func accent(_ kind: String) -> Color {
+        kind == "work" ? Theme.signalOnDark : kind == "rest" ? Color(hex: 0x8FB0FF) : .white
     }
 
     /// iOS redraws this every second on its own; the app only sends a new state per segment.

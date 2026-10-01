@@ -36,15 +36,25 @@ struct Workout: Identifiable {
         return Workout(name: name, segments: s)
     }
 
-    /// "4:30/km · 13.3 km/h" (the speed is what a treadmill takes).
-    var paceText: String? {
-        targetPace.map { String(format: "%d:%02d/km · %.1f km/h", $0 / 60, $0 % 60, 3600 / Double($0)) }
+    /// Target pace "4:30" (per km) and the same as a treadmill speed "13.3" (km/h).
+    var pace: String? { targetPace.map { String(format: "%d:%02d", $0 / 60, $0 % 60) } }
+    var speed: String? { targetPace.map { String(format: "%.1f", 3600 / Double($0)) } }
+    /// "4:30 /km · 13.3 km/h"
+    var paceText: String? { pace.map { "\($0) /km · \(speed!) km/h" } }
+
+    var parts: [Strip.Part] { segments.map { Strip.Part(kind: $0.kind.rawValue, seconds: Int($0.seconds)) } }
+
+    func next(after index: Int) -> Segment? { index + 1 < segments.count ? segments[index + 1] : nil }
+
+    /// The line under the title: the target while running, what comes next otherwise.
+    func detail(at index: Int) -> String {
+        if segments[index].isWork, let paceText { return paceText }
+        guard let next = next(after: index) else { return "Last part" }
+        return "Next: \(next.title.lowercased()) · \(clock(next.seconds))"
     }
 
-    static let presets = [
-        intervals("Quick test", warmup: 20, reps: 3, work: 20, rest: 10, cooldown: 20),
-        intervals("6 × 2:00 / 1:00", warmup: 300, reps: 6, work: 120, rest: 60, cooldown: 300),
-    ]
+    /// Two minutes to check the beeps with the screen locked.
+    static let quickTest = intervals("Quick test", warmup: 20, reps: 3, work: 20, rest: 10, cooldown: 20)
 
     /// The segment running at time `t` and the seconds left in it.
     func segment(at t: Double) -> (index: Int, segment: Segment, remaining: Double)? {
