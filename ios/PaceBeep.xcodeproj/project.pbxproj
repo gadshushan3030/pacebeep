@@ -13,7 +13,11 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		7A0000000000000000000007 /* PaceBeep */ = {isa = PBXFileSystemSynchronizedRootGroup; path = PaceBeep; sourceTree = "<group>"; };
+		7A0000000000000000000007 /* PaceBeep */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = PaceBeep;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -162,6 +166,7 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 7A0000000000000000000005 /* Config.xcconfig */;
 			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -186,6 +191,7 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 7A0000000000000000000005 /* Config.xcconfig */;
 			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
