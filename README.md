@@ -64,7 +64,7 @@ Open http://localhost:3200 and create an account.
 Requires Xcode 26 and an Apple ID (a free one works; the app then expires after 7 days).
 
 1. Xcode → Settings → Accounts → add your Apple ID.
-2. `cp ios/Local.xcconfig.example ios/Local.xcconfig` and set your team id and a bundle id of your own.
+2. The project's team and bundle id are in `ios/Config.xcconfig`. Building your own copy: `cp ios/Local.xcconfig.example ios/Local.xcconfig` and set your team id and a bundle id of your own there.
 3. Connect the iPhone, turn on Settings → Privacy & Security → Developer Mode, open `ios/PaceBeep.xcodeproj` and Run.
 4. First launch: trust the developer in Settings → General → VPN & Device Management.
 

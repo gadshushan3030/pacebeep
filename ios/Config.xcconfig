@@ -1,5 +1,7 @@
-// Signing for a real iPhone: copy Local.xcconfig.example to Local.xcconfig (gitignored) and fill it in.
-APP_BUNDLE_ID = dev.pacebeep.PaceBeep
+// Signing: the project's own team and bundle id (neither is secret: both are in every signed
+// build). Building your own copy? Override them in Local.xcconfig (see Local.xcconfig.example).
+DEVELOPMENT_TEAM = A9G52H5ZGX
+APP_BUNDLE_ID = com.gadshushan3030.PaceBeep
 // The PaceBeep server ("//" starts a comment in xcconfig, hence $()). Local testing in the
 // simulator: pass SERVER_URL=http://localhost:3201 to xcodebuild.
 SERVER_URL = https:/$()/pacebeep.vercel.app
