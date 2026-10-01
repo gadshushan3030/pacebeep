@@ -100,6 +100,18 @@ export function listWorkouts(userId: string, limit = 50) {
   );
 }
 
+// From `fromDate` (YYYY-MM-DD) on, then unscheduled ones; `done` = a run was recorded for it.
+export function upcomingWorkouts(userId: string, fromDate: string, limit = 30) {
+  return sql<Workout & { done: boolean }>(
+    `select w.id, w.name, w.notes, w.warmup_sec, w.repeats, w.work_sec, w.rest_sec, w.cooldown_sec,
+            w.target_pace_sec_per_km, w.scheduled_for,
+            exists (select 1 from runs r where r.workout_id = w.id) as done
+     from workouts w where w.user_id = $1 and (w.scheduled_for >= $2 or w.scheduled_for is null)
+     order by w.scheduled_for nulls last, w.created_at desc limit $3`,
+    [userId, fromDate, limit],
+  );
+}
+
 export async function getWorkout(userId: string, workoutId: string) {
   const [w] = await sql<Workout>("select * from workouts where id = $1 and user_id = $2", [workoutId, userId]);
   if (!w) throw new Error("workout not found");
