@@ -47,6 +47,7 @@ final class Runner {
     @ObservationIgnored private var recorded: Upload?
     @ObservationIgnored private var activity: Activity<WorkoutActivity>?
     @ObservationIgnored private var shownSegment: Int?
+    @ObservationIgnored private var activitySentAt = Date.distantPast
 
     init() {
         // A phone call or Siri pauses the player; resume when iOS says so.
@@ -120,6 +121,11 @@ final class Runner {
         if index != shownSegment {
             shownSegment = index
             if index == nil { endActivity() } else { updateActivity() }
+        } else if index != nil, Date().timeIntervalSince(activitySentAt) > 10 {
+            // On a phone (not the simulator) an update sent with the screen off can be lost: the
+            // lock screen then kept a finished rest at 0:00 through the next run. Resending the
+            // same state every 10 s repairs it; its dates are absolute, so resending is harmless.
+            updateActivity()
         }
         // Voice runs on this timer, beeps are in the track.
         while nextCue < cues.count, cues[nextCue].time + cues[nextCue].beep.tone.seconds <= elapsed {
@@ -241,6 +247,7 @@ final class Runner {
             end: now + current.remaining,
             pausedAt: state == .paused ? now : nil
         ), staleDate: nil)
+        activitySentAt = now
         if let activity {
             Task { await activity.update(content) }
         } else {
