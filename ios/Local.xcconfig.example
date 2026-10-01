@@ -1,3 +1,4 @@
-// Your Apple team (Xcode → Settings → Accounts) and a bundle id no one else has registered.
+// Only to build your own copy: copy to Local.xcconfig (gitignored). Your Apple team
+// (Xcode → Settings → Accounts) and a bundle id no one else has registered.
 DEVELOPMENT_TEAM = ABCDE12345
 APP_BUNDLE_ID = com.yourname.PaceBeep

@@ -37,7 +37,7 @@ You are setting up PaceBeep (repo: pacebeep, public, open source): an interval-r
   - Timer engine on a monotonic clock (not Timer ticks). Beeps and voice cues via AVAudioSession with the background-audio mode so cues play with the screen locked; haptics; Live Activity.
   - Offline-first: SwiftData store; sync queue where every write carries a UUID `request_id`.
   - Signs in with OAuth 2.1 + PKCE via ASWebAuthenticationSession (redirect `pacebeep://oauth/callback`) against the same backend auth server, then calls the backend API with the Bearer token.
-  - Signing settings in a gitignored `Local.xcconfig` (team id, bundle id); commit only an example file.
+  - Signing: the project's team id and bundle id are defaults in `Config.xcconfig` (neither is secret); a gitignored `Local.xcconfig` overrides them for anyone building their own copy.
 - **/web**: Next.js 16 (App Router, TypeScript) on Vercel + Postgres (Neon via Vercel Storage).
   - Better Auth: email + password with open registration (min 10 characters).
   - OAuth for agents: `@better-auth/mcp` `mcp()` plugin with `jwt()`, `loginPage: "/login"`, `consentPage: "/oauth/consent"`, `resource: <BETTER_AUTH_URL>/mcp`, `allowDynamicClientRegistration` + `allowUnauthenticatedClientRegistration` (ChatGPT registers itself with DCR).
