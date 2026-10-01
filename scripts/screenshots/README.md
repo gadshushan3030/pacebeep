@@ -40,7 +40,7 @@ The status bar keeps the real time, so it agrees with the start time on the afte
 | `lock-rest.png` | 9:28 in (the rest after run 4) |
 | `done.png` | After 13:03, unlock, pick an RPE |
 
-On a fresh install iOS asks once below the Live Activity whether to allow it; the crop below leaves that out.
+On a fresh install iOS asks once, under the Live Activity, whether to allow it. While that prompt shows, the card sits higher on the lock screen (y = 1573 on iPhone 17 Pro); once it's answered, the card sits at the bottom (y = 1890). Either way the crop below takes the card alone.
 
 ## 3. Web
 
@@ -54,7 +54,7 @@ Headless Chrome with a throwaway profile, signed in as the demo account, at 2x; 
 
 ```bash
 swift scripts/screenshots/compose.swift phones docs/screenshots/app.png home.png run-work.png run-rest.png done.png
-# Live Activity crops in pixels (iPhone 17 Pro); check them if the device or the card's layout changes.
-swift scripts/screenshots/compose.swift cards docs/screenshots/live-activity.png lock-work.png@42,1573,1122,346 lock-rest.png@42,1890,1122,346
+# Live Activity crops in pixels (iPhone 17 Pro, prompt showing; use y = 1890 once it's answered).
+swift scripts/screenshots/compose.swift cards docs/screenshots/live-activity.png lock-work.png@42,1573,1122,346 lock-rest.png@42,1573,1122,346
 swift scripts/screenshots/compose.swift page docs/screenshots/dashboard.png dashboard.png
 ```
