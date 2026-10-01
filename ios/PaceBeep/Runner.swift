@@ -12,6 +12,10 @@ final class Runner {
     private(set) var elapsed = 0.0
     /// After a run: did the audio play without gaps, and did the voice keep up.
     private(set) var report: [String] = []
+    /// The run just recorded, until the runner rates it (RPE) or starts another one.
+    private(set) var unrated: Upload?
+    /// Where recorded runs go (the coach's outbox).
+    @ObservationIgnored var onRun: (Upload) -> Void = { _ in }
 
     @ObservationIgnored private var player: AVAudioPlayer?
     @ObservationIgnored private var timer: Timer?
@@ -46,6 +50,7 @@ final class Runner {
     func start(_ w: Workout) {
         workout = w
         report = []
+        unrated = nil
         state = .preparing
         let url = URL.temporaryDirectory.appending(path: "workout.caf")
         Task.detached(priority: .userInitiated) { [self] in
@@ -133,11 +138,42 @@ final class Runner {
 
     func stop() {
         timer?.invalidate()
+        elapsed = player?.currentTime ?? elapsed
         player?.stop()
         synth.stopSpeaking(at: .immediate)
         endActivity()
+        record()
         workout = nil
         state = .idle
+    }
+
+    /// The runner's RPE (1-10) for the run just recorded: the same run again, with feedback.
+    func rate(_ rpe: Int) {
+        guard var run = unrated else { return }
+        run.feedback = Upload.Feedback(request_id: UUID().uuidString, rpe: rpe)
+        onRun(run)
+        unrated = nil
+    }
+
+    /// Sends the run to the coach: every segment reached, with the time actually spent in it.
+    /// Runs shorter than 5 minutes (the quick test, an accidental start) are not sent.
+    private func record() {
+        guard let workout, elapsed >= 300 else { return }
+        var start = 0.0
+        var intervals: [Upload.Interval] = []
+        for s in workout.segments where start < elapsed {
+            intervals.append(.init(kind: s.kind.rawValue, planned_sec: Int(s.seconds), actual_sec: Int(min(s.seconds, elapsed - start))))
+            start += s.seconds
+        }
+        let iso = ISO8601DateFormatter()
+        let run = Upload(request_id: UUID().uuidString, run: .init(
+            workout_id: workout.serverId,
+            started_at: iso.string(from: startedAt),
+            ended_at: iso.string(from: Date()),
+            intervals: intervals
+        ))
+        onRun(run)
+        unrated = run
     }
 
     /// Sent on start, at each new segment and on pause/resume; iOS ticks the countdown in between.
@@ -167,6 +203,7 @@ final class Runner {
     private func finish() {
         timer?.invalidate()
         endActivity()
+        record()
         let wall = Date().timeIntervalSince(startedAt) - pausedTotal
         let audio = player?.duration ?? 0
         let gap = wall - audio

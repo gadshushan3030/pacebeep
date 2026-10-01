@@ -29,8 +29,8 @@ You are setting up PaceBeep (repo: pacebeep, public, open source): an interval-r
 
 ### Status
 - **/web is built and deployed**: auth (incl. Google sign-in), OAuth for agents, MCP tools below, dashboard, workouts, account deletion, `/privacy` and `/terms`. Verified: full OAuth flow, idempotent replays, cross-user isolation, per-user disconnect.
-- **/ios is a prototype**: a timer only (no sign-in, no sync), built to test the one risky part – beeps with the screen locked. The workout is rendered into one audio track (silence with the beeps at their exact times) and played with the background-audio mode; the player's position is the workout clock.
-- **Next**: a real run with the prototype decides whether the full iOS app is worth building. Then password reset (email provider).
+- **/ios works end to end**: signs in as a native OAuth client (DCR, redirect `app.vercel.pacebeep:/oauth/callback`, PKCE), lists `GET /api/workouts`, plays a workout as one rendered audio track (beeps on exact times, background-audio mode, Live Activity), and sends `POST /api/runs` with the RPE through an offline outbox. No GPS yet: intervals are timed, which also fits a treadmill.
+- **Next**: GPS distance/pace outdoors; TestFlight (paid program); password reset (email provider).
 
 ### Architecture
 - **/ios**: SwiftUI app (Xcode project "PaceBeep"), iOS 17+.

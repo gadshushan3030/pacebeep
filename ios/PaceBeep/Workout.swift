@@ -1,25 +1,44 @@
 import AVFoundation
 
 struct Segment {
+    enum Kind: String { case warmup, work, rest, cooldown }
+
+    let kind: Kind
     let title: String
     let seconds: Double
-    let isWork: Bool
+    var isWork: Bool { kind == .work }
 }
 
 struct Workout: Identifiable {
     let name: String
     let segments: [Segment]
-    var id: String { name }
+    /// Set for workouts from the server (planned by the assistant).
+    var serverId: String?
+    var notes: String?
+    /// Target pace for the work intervals, seconds per km.
+    var targetPace: Int?
+    /// YYYY-MM-DD
+    var scheduledFor: String?
+    var done = false
+
+    var id: String { serverId ?? name }
     var total: Double { segments.reduce(0) { $0 + $1.seconds } }
 
+    /// Zero-length parts (no warmup, no rest) are left out.
     static func intervals(_ name: String, warmup: Double, reps: Int, work: Double, rest: Double, cooldown: Double) -> Workout {
-        var s = [Segment(title: "Warm up", seconds: warmup, isWork: false)]
+        var s: [Segment] = []
+        if warmup > 0 { s.append(Segment(kind: .warmup, title: "Warm up", seconds: warmup)) }
         for i in 1...reps {
-            s.append(Segment(title: "Run \(i) of \(reps)", seconds: work, isWork: true))
-            if i < reps { s.append(Segment(title: "Rest", seconds: rest, isWork: false)) }
+            s.append(Segment(kind: .work, title: "Run \(i) of \(reps)", seconds: work))
+            if i < reps, rest > 0 { s.append(Segment(kind: .rest, title: "Rest", seconds: rest)) }
         }
-        s.append(Segment(title: "Cool down", seconds: cooldown, isWork: false))
+        if cooldown > 0 { s.append(Segment(kind: .cooldown, title: "Cool down", seconds: cooldown)) }
         return Workout(name: name, segments: s)
+    }
+
+    /// "4:30/km · 13.3 km/h" (the speed is what a treadmill takes).
+    var paceText: String? {
+        targetPace.map { String(format: "%d:%02d/km · %.1f km/h", $0 / 60, $0 % 60, 3600 / Double($0)) }
     }
 
     static let presets = [
@@ -44,7 +63,8 @@ struct Workout: Identifiable {
             if s.isWork {
                 for k in 1...3 where t >= Double(k) { out.append(Cue(time: t - Double(k), beep: .pip, text: nil)) }
             }
-            out.append(Cue(time: t, beep: s.isWork ? .go : .rest, text: "\(s.title), \(spoken(s.seconds))"))
+            let pace = s.isWork ? targetPace.map { ", pace \($0 / 60):\(String(format: "%02d", $0 % 60))" } ?? "" : ""
+            out.append(Cue(time: t, beep: s.isWork ? .go : .rest, text: "\(s.title), \(spoken(s.seconds))\(pace)"))
             t += s.seconds
         }
         out.append(Cue(time: t, beep: .done, text: "Workout complete"))

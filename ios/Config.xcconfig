@@ -1,5 +1,8 @@
 // Signing for a real iPhone: copy Local.xcconfig.example to Local.xcconfig (gitignored) and fill it in.
 APP_BUNDLE_ID = dev.pacebeep.PaceBeep
+// The PaceBeep server ("//" starts a comment in xcconfig, hence $()). Local testing in the
+// simulator: pass SERVER_URL=http://localhost:3201 to xcodebuild.
+SERVER_URL = https:/$()/pacebeep.vercel.app
 #include? "Local.xcconfig"
 // The widget extension overrides this with $(APP_BUNDLE_ID).Widget.
 PRODUCT_BUNDLE_IDENTIFIER = $(APP_BUNDLE_ID)
