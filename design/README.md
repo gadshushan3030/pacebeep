@@ -21,6 +21,7 @@ The design lives on a canvas: **[PaceBeep design](https://claude.ai/artifact/CU2
 | Line | `#E3E1DB` | Card borders | `--border` | `Theme.line` |
 | Muted | `#5C5F66` | Secondary text (6:1 on Paper) | `--muted` | `Theme.muted` |
 | Sent | `#1B6E43` | Done, synced | `--good` | `Theme.sent` |
+| Bad | `#C2362B` | Destructive actions (sign out, delete) | `--bad` | `Theme.bad` |
 
 Work and rest differ in lightness, not only hue, so they read at a glance in sunlight and with red-green color blindness. White text never sits on Signal: Ink does (5:1).
 

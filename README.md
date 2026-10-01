@@ -15,7 +15,7 @@ The auth + MCP layer is also available on its own as a clean template: **[MCP OA
 
 ## Screens
 
-With the screen locked, the run stays on the lock screen and in the Dynamic Island as a Live Activity: orange to run, blue to rest.
+With the screen locked, the run stays on the lock screen as a Live Activity, and in the Dynamic Island while you use other apps: orange to run, blue to rest.
 
 ![Live Activity on the lock screen while running and while resting](docs/screenshots/live-activity.png)
 
