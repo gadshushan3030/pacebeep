@@ -129,12 +129,27 @@ export type Run = {
   intervals: z.infer<typeof intervalInput>[];
 };
 
+// With the latest RPE the runner gave each run.
 export function listRuns(userId: string, limit = 20) {
-  return sql<Run>(
-    `select r.id, r.workout_id, w.name as workout_name, r.source, r.started_at, r.ended_at, r.distance_m, r.intervals
+  return sql<Run & { rpe: number | null }>(
+    `select r.id, r.workout_id, w.name as workout_name, r.source, r.started_at, r.ended_at, r.distance_m, r.intervals,
+            (select f.rpe from run_feedback f where f.run_id = r.id and f.rpe is not null order by f.created_at desc limit 1) as rpe
      from runs r left join workouts w on w.id = r.workout_id
      where r.user_id = $1 order by r.started_at desc limit $2`,
     [userId, limit],
+  );
+}
+
+// Workouts scheduled from `from` to `to` (YYYY-MM-DD), each with its latest run's RPE when done.
+export function weekWorkouts(userId: string, from: string, to: string) {
+  return sql<Workout & { done: boolean; rpe: number | null }>(
+    `select w.*, r.id is not null as done, f.rpe
+     from workouts w
+     left join lateral (select id from runs where workout_id = w.id order by started_at desc limit 1) r on true
+     left join lateral (select rpe from run_feedback where run_id = r.id and rpe is not null order by created_at desc limit 1) f on true
+     where w.user_id = $1 and w.scheduled_for between $2 and $3
+     order by w.scheduled_for, w.created_at`,
+    [userId, from, to],
   );
 }
 
@@ -155,11 +170,12 @@ export async function getRun(userId: string, runId: string) {
 
 export async function summary(userId: string) {
   const [[stats], upcoming] = await Promise.all([
-    sql<{ workouts: number; runs_7d: number; runs_30d: number; distance_30d_m: number; last_run_at: Date | null }>(
+    sql<{ workouts: number; runs_7d: number; runs_30d: number; distance_30d_m: number; seconds_30d: number; last_run_at: Date | null }>(
       `select (select count(*)::int from workouts where user_id = $1) as workouts,
               count(*) filter (where started_at > now() - interval '7 days')::int as runs_7d,
               count(*) filter (where started_at > now() - interval '30 days')::int as runs_30d,
               coalesce(sum(distance_m) filter (where started_at > now() - interval '30 days'), 0)::int as distance_30d_m,
+              coalesce(sum(extract(epoch from ended_at - started_at)) filter (where started_at > now() - interval '30 days'), 0)::int as seconds_30d,
               max(started_at) as last_run_at
        from runs where user_id = $1`,
       [userId],
@@ -174,6 +190,15 @@ export async function summary(userId: string) {
 }
 
 export const fmtDuration = (sec: number) => `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, "0")}`;
+
+// 7080 → "1:58" (hours:minutes)
+export const fmtHours = (sec: number) => `${Math.floor(sec / 3600)}:${String(Math.floor((sec % 3600) / 60)).padStart(2, "0")}`;
+
+export const totalSec = (w: Pick<Workout, "warmup_sec" | "repeats" | "work_sec" | "rest_sec" | "cooldown_sec">) =>
+  w.warmup_sec + w.repeats * w.work_sec + (w.repeats - 1) * w.rest_sec + w.cooldown_sec;
+
+// "4:30 /km · 13.3 km/h": the speed is what a treadmill takes.
+export const fmtPace = (secPerKm: number) => `${fmtDuration(secPerKm)} /km · ${(3600 / secPerKm).toFixed(1)} km/h`;
 
 export const describeWorkout = (w: Pick<Workout, "repeats" | "work_sec" | "rest_sec">) =>
   `${w.repeats} × ${fmtDuration(w.work_sec)} / ${fmtDuration(w.rest_sec)} rest`;
