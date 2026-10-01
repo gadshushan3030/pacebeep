@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>PaceBeep brand</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 1280px; height: 800px; box-sizing: border-box; padding: 64px; display: grid; grid-template-columns: 460px minmax(0, 1fr); gap: 72px; background: #F5F4F0; color: #121316; font-family: 'Archivo', 'Helvetica Neue', system-ui, sans-serif">
+  <section aria-label="Icon and wordmark" style="display: flex; flex-direction: column; gap: 32px">
+    <svg width="300" height="300" viewBox="0 0 64 64" aria-label="PaceBeep app icon"><rect width="64" height="64" rx="14.4" fill="#E4572E"></rect><path d="M8 36h12l5-14 8 26 6-18 4 6h13" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+    <div style="display: flex; align-items: flex-end; gap: 24px">
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 8px">
+        <svg width="120" height="120" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14.4" fill="#E4572E"></rect><path d="M8 36h12l5-14 8 26 6-18 4 6h13" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+        <span style="font-size: 12px; color: #5C5F66">Home screen</span>
+      </div>
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 8px">
+        <svg width="60" height="60" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14.4" fill="#E4572E"></rect><path d="M8 36h12l5-14 8 26 6-18 4 6h13" fill="none" stroke="#fff" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+        <span style="font-size: 12px; color: #5C5F66">Spotlight</span>
+      </div>
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 8px">
+        <svg width="29" height="29" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14.4" fill="#E4572E"></rect><path d="M8 36h12l5-14 8 26 6-18 4 6h13" fill="none" stroke="#fff" stroke-width="6.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+        <span style="font-size: 12px; color: #5C5F66">Settings</span>
+      </div>
+    </div>
+    <div style="display: flex; align-items: center; gap: 14px">
+      <svg width="52" height="52" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#E4572E"></rect><path d="M8 36h12l5-14 8 26 6-18 4 6h13" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+      <span style="font-size: 64px; line-height: 1; font-weight: 800; font-stretch: 78%; letter-spacing: -0.01em">PaceBeep</span>
+    </div>
+  </section>
+
+  <div style="display: flex; flex-direction: column; gap: 40px">
+    <section aria-labelledby="colors" style="display: flex; flex-direction: column; gap: 16px">
+      <h2 id="colors" style="margin: 0; font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #5C5F66">Colors</h2>
+      <div style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 14px">
+        <div style="display: flex; flex-direction: column; gap: 8px"><div style="height: 120px; border-radius: 18px; background: #E4572E"></div><span style="font-size: 16px; font-weight: 700">Signal</span><span style="font-size: 13px; color: #5C5F66">#E4572E · work, brand</span></div>
+        <div style="display: flex; flex-direction: column; gap: 8px"><div style="height: 120px; border-radius: 18px; background: #1D3C8F"></div><span style="font-size: 16px; font-weight: 700">Rest</span><span style="font-size: 13px; color: #5C5F66">#1D3C8F · rest</span></div>
+        <div style="display: flex; flex-direction: column; gap: 8px"><div style="height: 120px; border-radius: 18px; background: #121316"></div><span style="font-size: 16px; font-weight: 700">Ink</span><span style="font-size: 13px; color: #5C5F66">#121316 · text, warm-up</span></div>
+        <div style="display: flex; flex-direction: column; gap: 8px"><div style="height: 120px; box-sizing: border-box; border-radius: 18px; background: #F5F4F0; border: 1px solid #D6D3CB"></div><span style="font-size: 16px; font-weight: 700">Paper</span><span style="font-size: 13px; color: #5C5F66">#F5F4F0 · ground</span></div>
+        <div style="display: flex; flex-direction: column; gap: 8px"><div style="height: 120px; border-radius: 18px; background: #1B6E43"></div><span style="font-size: 16px; font-weight: 700">Sent</span><span style="font-size: 13px; color: #5C5F66">#1B6E43 · done, synced</span></div>
+      </div>
+      <p style="margin: 0; font-size: 14px; line-height: 1.45; color: #5C5F66">Work and rest differ in lightness, not only hue: you can tell them apart at a glance in sunlight, and with red-green color blindness.</p>
+    </section>
+
+    <section aria-labelledby="type" style="display: flex; flex-direction: column; gap: 14px">
+      <h2 id="type" style="margin: 0; font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #5C5F66">Type: Archivo</h2>
+      <div style="display: flex; align-items: flex-end; gap: 36px">
+        <span style="font-size: 170px; line-height: 0.8; font-weight: 800; font-stretch: 66%; font-variant-numeric: tabular-nums; letter-spacing: -0.02em">1:24</span>
+        <div style="display: flex; flex-direction: column; gap: 10px; padding-bottom: 6px">
+          <span style="font-size: 30px; line-height: 1; font-weight: 800; font-stretch: 78%">Run 3 of 6 · 4:30 /km</span>
+          <span style="font-size: 17px; line-height: 1.4">Narrow and heavy for the clock and headings, so big numbers fit a phone. Normal width for everything you read.</span>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":800}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

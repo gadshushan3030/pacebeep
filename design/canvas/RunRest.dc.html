@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Run: rest interval</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#F5F4F0}a:hover{color:#FFFFFF}
+</style>
+</helmet>
+<main style="width: 390px; height: 844px; box-sizing: border-box; padding: 64px 22px 36px; display: flex; flex-direction: column; background: #1D3C8F; color: #F5F4F0; font-family: 'Archivo', 'Helvetica Neue', system-ui, sans-serif; overflow: hidden">
+  <div style="display: flex; justify-content: space-between; align-items: center; font-size: 15px; font-weight: 700">
+    <span style="letter-spacing: 0.08em; text-transform: uppercase">Rest</span>
+    <span style="font-variant-numeric: tabular-nums">15:18 / 27:00</span>
+  </div>
+
+  <div style="flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 6px">
+    <div aria-label="42 seconds of rest left" style="font-size: 210px; line-height: 0.82; font-weight: 800; font-stretch: 66%; font-variant-numeric: tabular-nums; letter-spacing: -0.02em">0:42</div>
+    <div style="font-size: 16px; font-weight: 600">to walk it off</div>
+  </div>
+
+  <div style="padding: 16px 18px; background: #F5F4F0; color: #121316; border-radius: 20px; display: flex; align-items: center; gap: 14px">
+    <svg width="36" height="36" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#E4572E"></rect><path d="M8 36h12l5-14 8 26 6-18 4 6h13" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+    <div style="display: flex; flex-direction: column; gap: 2px">
+      <span style="font-size: 13px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #5C5F66">Next</span>
+      <span style="font-size: 22px; font-weight: 800; font-stretch: 78%">Run 4 of 6 · 2:00 at 4:30 /km</span>
+    </div>
+  </div>
+
+  <div aria-label="Progress: three reps done, resting before rep 4" style="margin-top: 22px; display: flex; gap: 3px">
+    <div style="flex-grow: 300; flex-basis: 0; height: 8px; border-radius: 3px; background: #F5F4F0"></div>
+    <div style="flex-grow: 120; flex-basis: 0; height: 8px; border-radius: 3px; background: #F5F4F0"></div>
+    <div style="flex-grow: 60; flex-basis: 0; height: 8px; border-radius: 3px; background: #F5F4F0"></div>
+    <div style="flex-grow: 120; flex-basis: 0; height: 8px; border-radius: 3px; background: #F5F4F0"></div>
+    <div style="flex-grow: 60; flex-basis: 0; height: 8px; border-radius: 3px; background: #F5F4F0"></div>
+    <div style="flex-grow: 120; flex-basis: 0; height: 8px; border-radius: 3px; background: #F5F4F0"></div>
+    <div style="flex-grow: 60; flex-basis: 0; height: 8px; border-radius: 3px; background: #8FB0FF; box-shadow: 0 0 0 2px #F5F4F0"></div>
+    <div style="flex-grow: 120; flex-basis: 0; height: 8px; border-radius: 3px; background: #4565C2"></div>
+    <div style="flex-grow: 60; flex-basis: 0; height: 8px; border-radius: 3px; background: #4565C2"></div>
+    <div style="flex-grow: 120; flex-basis: 0; height: 8px; border-radius: 3px; background: #4565C2"></div>
+    <div style="flex-grow: 60; flex-basis: 0; height: 8px; border-radius: 3px; background: #4565C2"></div>
+    <div style="flex-grow: 120; flex-basis: 0; height: 8px; border-radius: 3px; background: #4565C2"></div>
+    <div style="flex-grow: 300; flex-basis: 0; height: 8px; border-radius: 3px; background: #4565C2"></div>
+  </div>
+  <div style="margin-top: 12px; font-size: 17px; font-weight: 700">3 beeps, then go</div>
+
+  <div style="margin-top: 26px; display: flex; justify-content: center; align-items: center; gap: 28px">
+    <button type="button" aria-label="Stop" style="width: 64px; height: 64px; border-radius: 32px; border: 2.5px solid #F5F4F0; background: transparent; display: flex; align-items: center; justify-content: center; cursor: pointer">
+      <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="5" width="14" height="14" rx="2" fill="#F5F4F0"></rect></svg>
+    </button>
+    <button type="button" aria-label="Pause" style="width: 88px; height: 88px; border-radius: 44px; border: 0; background: #F5F4F0; display: flex; align-items: center; justify-content: center; cursor: pointer">
+      <svg width="30" height="30" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="4" width="4" height="16" rx="1" fill="#1D3C8F"></rect><rect x="14" y="4" width="4" height="16" rx="1" fill="#1D3C8F"></rect></svg>
+    </button>
+    <div style="width: 64px"></div>
+  </div>
+</main>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

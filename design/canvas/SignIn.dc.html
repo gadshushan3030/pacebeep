@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Sign in to PaceBeep</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#121316}a:hover{color:#3a3d44}
+</style>
+</helmet>
+<main style="width: 390px; height: 844px; box-sizing: border-box; padding: 96px 24px 40px; display: flex; flex-direction: column; gap: 28px; background: #F5F4F0; color: #121316; font-family: 'Archivo', 'Helvetica Neue', system-ui, sans-serif; overflow: hidden">
+  <svg width="88" height="88" viewBox="0 0 64 64" aria-label="PaceBeep"><rect width="64" height="64" rx="14" fill="#E4572E"></rect><path d="M8 36h12l5-14 8 26 6-18 4 6h13" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+  <h1 style="margin: 0; font-size: 44px; line-height: 1; font-weight: 800; font-stretch: 72%; letter-spacing: -0.01em; text-wrap: balance">Your coach plans the intervals. Your phone counts them.</h1>
+  <p style="margin: 0; font-size: 17px; line-height: 1.45; color: #4A4D55">Workouts you plan with ChatGPT or Claude show up here. Run with the screen locked: the beeps keep going, and the run goes back to your coach.</p>
+  <div style="margin-top: auto; display: flex; flex-direction: column; gap: 14px">
+    <a href="Main.dc.html" style="min-height: 56px; border-radius: 16px; background: #121316; color: #F5F4F0; font-size: 18px; font-weight: 700; text-decoration: none; display: flex; align-items: center; justify-content: center">Sign in to PaceBeep</a>
+    <p style="margin: 0; text-align: center; font-size: 13px; color: #5C5F66">Opens pacebeep.vercel.app · Google or email</p>
+    <a href="RunWork.dc.html" style="min-height: 44px; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 600">Try a 2-minute test first</a>
+  </div>
+</main>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

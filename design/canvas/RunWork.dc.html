@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Run: work interval</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#121316}a:hover{color:#3a3d44}
+</style>
+</helmet>
+<main style="width: 390px; height: 844px; box-sizing: border-box; padding: 64px 22px 36px; display: flex; flex-direction: column; background: #E4572E; color: #121316; font-family: 'Archivo', 'Helvetica Neue', system-ui, sans-serif; overflow: hidden">
+  <div style="display: flex; justify-content: space-between; align-items: center; font-size: 15px; font-weight: 700">
+    <span style="letter-spacing: 0.08em; text-transform: uppercase">Run 3 of 6</span>
+    <span style="font-variant-numeric: tabular-nums">13:24 / 27:00</span>
+  </div>
+
+  <div style="flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 6px">
+    <div aria-label="1 minute 24 seconds left in this rep" style="font-size: 210px; line-height: 0.82; font-weight: 800; font-stretch: 66%; font-variant-numeric: tabular-nums; letter-spacing: -0.02em">1:24</div>
+    <div style="font-size: 16px; font-weight: 600">left in this rep</div>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px">
+    <div style="padding: 12px 16px 14px; border: 2px solid #121316; border-radius: 18px; display: flex; flex-direction: column; gap: 2px">
+      <span style="font-size: 13px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase">Target pace</span>
+      <span style="font-size: 34px; font-weight: 800; font-stretch: 72%; font-variant-numeric: tabular-nums">4:30 <span style="font-size: 17px; font-weight: 700; font-stretch: 100%">/km</span></span>
+    </div>
+    <div style="padding: 12px 16px 14px; border: 2px solid #121316; border-radius: 18px; display: flex; flex-direction: column; gap: 2px">
+      <span style="font-size: 13px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase">Treadmill</span>
+      <span style="font-size: 34px; font-weight: 800; font-stretch: 72%; font-variant-numeric: tabular-nums">13.3 <span style="font-size: 17px; font-weight: 700; font-stretch: 100%">km/h</span></span>
+    </div>
+  </div>
+
+  <div aria-label="Progress: warm up and two reps done, rep 3 running" style="margin-top: 22px; display: flex; gap: 3px">
+    <div style="flex-grow: 300; flex-basis: 0; height: 8px; border-radius: 3px; background: #121316"></div>
+    <div style="flex-grow: 120; flex-basis: 0; height: 8px; border-radius: 3px; background: #121316"></div>
+    <div style="flex-grow: 60; flex-basis: 0; height: 8px; border-radius: 3px; background: #121316"></div>
+    <div style="flex-grow: 120; flex-basis: 0; height: 8px; border-radius: 3px; background: #121316"></div>
+    <div style="flex-grow: 60; flex-basis: 0; height: 8px; border-radius: 3px; background: #121316"></div>
+    <div style="flex-grow: 120; flex-basis: 0; height: 8px; border-radius: 3px; background: #FFFFFF; box-shadow: 0 0 0 2px #121316"></div>
+    <div style="flex-grow: 60; flex-basis: 0; height: 8px; border-radius: 3px; background: #F2A389"></div>
+    <div style="flex-grow: 120; flex-basis: 0; height: 8px; border-radius: 3px; background: #F2A389"></div>
+    <div style="flex-grow: 60; flex-basis: 0; height: 8px; border-radius: 3px; background: #F2A389"></div>
+    <div style="flex-grow: 120; flex-basis: 0; height: 8px; border-radius: 3px; background: #F2A389"></div>
+    <div style="flex-grow: 60; flex-basis: 0; height: 8px; border-radius: 3px; background: #F2A389"></div>
+    <div style="flex-grow: 120; flex-basis: 0; height: 8px; border-radius: 3px; background: #F2A389"></div>
+    <div style="flex-grow: 300; flex-basis: 0; height: 8px; border-radius: 3px; background: #F2A389"></div>
+  </div>
+  <div style="margin-top: 12px; font-size: 17px; font-weight: 700">Next: rest 1:00</div>
+
+  <div style="margin-top: 26px; display: flex; justify-content: center; align-items: center; gap: 28px">
+    <button type="button" aria-label="Stop" style="width: 64px; height: 64px; border-radius: 32px; border: 2.5px solid #121316; background: transparent; display: flex; align-items: center; justify-content: center; cursor: pointer">
+      <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="5" width="14" height="14" rx="2" fill="#121316"></rect></svg>
+    </button>
+    <button type="button" aria-label="Pause" style="width: 88px; height: 88px; border-radius: 44px; border: 0; background: #121316; display: flex; align-items: center; justify-content: center; cursor: pointer">
+      <svg width="30" height="30" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="4" width="4" height="16" rx="1" fill="#F5F4F0"></rect><rect x="14" y="4" width="4" height="16" rx="1" fill="#F5F4F0"></rect></svg>
+    </button>
+    <div style="width: 64px"></div>
+  </div>
+</main>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>
