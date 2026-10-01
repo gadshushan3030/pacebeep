@@ -63,9 +63,10 @@ func parseDay(_ ymd: String?) -> Date? {
     return dayFormat("yyyy-MM-dd").date(from: ymd)
 }
 
+/// Fixed patterns ("EEE d MMM"); en_US_POSIX because en_GB spells September "Sept".
 func dayFormat(_ pattern: String) -> DateFormatter {
     let f = DateFormatter()
-    f.locale = Locale(identifier: "en_GB")
+    f.locale = Locale(identifier: "en_US_POSIX")
     f.dateFormat = pattern
     return f
 }

@@ -1,6 +1,10 @@
 # PaceBeep
 
-Interval running with an AI coach. Plan interval workouts, record runs, and let your assistant (ChatGPT, Claude or any MCP client) read your training and write plans, over OAuth.
+Interval running with an AI coach. Your assistant (ChatGPT, Claude or any MCP client) plans the intervals over OAuth; the iPhone app plays them with beeps that keep going with the screen locked, and sends each run back.
+
+**[pacebeep.vercel.app](https://pacebeep.vercel.app)** · [Connect ChatGPT](#connect-chatgpt) · [Run your own](#deploy-your-own-vercel--neon)
+
+![The iPhone app: today's workout from the coach, a work interval, a rest interval, and the summary with the RPE that goes back to the coach](docs/screenshots/app.png)
 
 - **web/** – Next.js 16 backend and dashboard: accounts, workouts, runs, and an MCP server at `/mcp`.
 - **ios/** – SwiftUI app: plays the workouts your assistant planned as timed intervals with beeps that keep going with the screen locked, shows a Live Activity (lock screen and Dynamic Island), and sends each run and your RPE back.
@@ -8,6 +12,16 @@ Interval running with an AI coach. Plan interval workouts, record runs, and let 
 - **docs/AGENT_BRIEF.md** – architecture and the brief for coding agents working on this repo.
 
 The auth + MCP layer is also available on its own as a clean template: **[MCP OAuth Starter](https://github.com/gadshushan3030/mcp-oauth-starter)**. Single-owner sibling project: [English Coach](https://github.com/gadshushan3030/english-coach-mcp).
+
+## Screens
+
+With the screen locked, the run stays on the lock screen as a Live Activity, and in the Dynamic Island while you use other apps: orange to run, blue to rest.
+
+![Live Activity on the lock screen while running and while resting](docs/screenshots/live-activity.png)
+
+On the web, the week your coach planned, what you ran and how it felt, and which apps can see your data.
+
+![Web dashboard: the week as seven days with done workouts and their RPE, totals, recent runs, connected apps](docs/screenshots/dashboard.png)
 
 ## How it works
 

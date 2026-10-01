@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/session";
-import { fmtDuration, getRun } from "@/lib/workouts";
+import { fmtDuration, formatDate, getRun } from "@/lib/workouts";
 
 const TZ = "Asia/Jerusalem";
 const COLOR = { warmup: "var(--neutral)", work: "var(--signal)", rest: "var(--rest)", cooldown: "var(--neutral)" } as const;
@@ -33,7 +33,7 @@ export default async function RunPage({ params }: PageProps<"/runs/[id]">) {
         </Link>
         <h1 dir="auto" className="display text-[56px] [font-stretch:68%]">{run.workout_name ?? "Free run"}</h1>
         <p className="muted">
-          {new Date(run.started_at).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", timeZone: TZ })} ·{" "}
+          {formatDate(run.started_at, { weekday: "short", day: "numeric", month: "short", timeZone: TZ })} ·{" "}
           {time(run.started_at)} to {time(run.ended_at)} · {run.source === "device" ? "recorded by your phone" : "you told your coach"}
         </p>
       </div>

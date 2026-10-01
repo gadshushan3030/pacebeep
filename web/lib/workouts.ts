@@ -191,6 +191,11 @@ export async function summary(userId: string) {
 
 export const fmtDuration = (sec: number) => `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, "0")}`;
 
+// Day first, like the design: "Tue 29 Sep". en-GB's data spells September "Sept" (every other
+// month has three letters), so it is shortened to match.
+export const formatDate = (d: Date | string, opts: Intl.DateTimeFormatOptions) =>
+  new Date(d).toLocaleDateString("en-GB", opts).replace("Sept", "Sep");
+
 // 7080 → "1:58" (hours:minutes)
 export const fmtHours = (sec: number) => `${Math.floor(sec / 3600)}:${String(Math.floor((sec % 3600) / 60)).padStart(2, "0")}`;
 

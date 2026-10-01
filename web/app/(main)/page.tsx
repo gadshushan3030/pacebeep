@@ -2,11 +2,11 @@ import Link from "next/link";
 import { revokeConnection } from "@/app/actions";
 import { sql, today } from "@/lib/db";
 import { requireUser } from "@/lib/session";
-import { fmtDuration, fmtHours, listRuns, summary, totalSec, weekWorkouts } from "@/lib/workouts";
+import { fmtDuration, fmtHours, formatDate, listRuns, summary, totalSec, weekWorkouts } from "@/lib/workouts";
 
 const TZ = "Asia/Jerusalem";
-const day = (ymd: string, opts: Intl.DateTimeFormatOptions) => new Date(`${ymd}T12:00:00Z`).toLocaleDateString("en-GB", { ...opts, timeZone: "UTC" });
-const fmtDate = (d: Date | string) => new Date(d).toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: TZ });
+const day = (ymd: string, opts: Intl.DateTimeFormatOptions) => formatDate(`${ymd}T12:00:00Z`, { ...opts, timeZone: "UTC" });
+const fmtDate = (d: Date | string) => formatDate(d, { day: "numeric", month: "short", timeZone: TZ });
 
 // Monday to Sunday around a YYYY-MM-DD.
 function weekOf(ymd: string) {

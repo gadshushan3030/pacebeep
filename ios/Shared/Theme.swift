@@ -10,6 +10,7 @@ enum Theme {
     static let line = Color(hex: 0xE3E1DB)
     static let muted = Color(hex: 0x5C5F66)
     static let sent = Color(hex: 0x1B6E43)
+    static let bad = Color(hex: 0xC2362B)
 
     /// Background and text for a phase of the run: orange to run, blue to rest, ink otherwise.
     static func phase(_ kind: String) -> (background: Color, text: Color) {

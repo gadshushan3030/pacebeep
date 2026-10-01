@@ -43,6 +43,7 @@ struct HomeView: View {
                             Spacer(minLength: 0)
                         }
                         .padding(.horizontal, 16)
+                        .padding(.vertical, 10)
                         .frame(minHeight: 56)
                         .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(Color(hex: 0xB9B6AD), style: StrokeStyle(lineWidth: 1.5, dash: [5, 4])))
                     }
@@ -51,7 +52,8 @@ struct HomeView: View {
                 ForEach([error, coach.message].compactMap { $0 }, id: \.self) {
                     Text($0).font(.footnote).foregroundStyle(Theme.muted)
                 }
-                Button("Sign out", role: .destructive) { coach.signOut() }.font(.footnote)
+                // Explicit red: the VStack's ink foreground would override the destructive role's.
+                Button("Sign out", role: .destructive) { coach.signOut() }.font(.footnote).foregroundStyle(Theme.bad)
             }
             .foregroundStyle(Theme.ink)
             .padding(.horizontal, 20)
