@@ -43,15 +43,12 @@ struct DoneView: View {
             Text(s.workout.name).font(.display(20)).direction(of: s.workout.name)
             HStack(alignment: .top) {
                 value(clock(s.seconds), "time")
-                value("\(s.repsDone) / \(s.reps)", "reps")
+                if s.sets > 0 { value("\(s.setsDone) / \(s.sets)", "sets") }
+                if s.reps > 0 { value("\(s.repsDone) / \(s.reps)", "reps") }
                 value("\(s.pauses)", s.pauses == 1 ? "pause" : "pauses")
             }
             // Done parts in their own colors; the ones a stop skipped stay grey.
-            let reached = s.workout.segments.reduce(into: (count: 0, start: 0.0)) { acc, seg in
-                if acc.start < runner.elapsed || s.finished { acc.count += 1 }
-                acc.start += seg.seconds
-            }.count
-            Strip(parts: s.workout.parts) { i, part in i < reached ? Theme.planColor(part.kind, onDark: false) : Theme.line }
+            Strip(parts: s.workout.parts) { i, part in i < s.reached ? Theme.planColor(part.kind, onDark: false) : Theme.line }
         }
         .padding(18)
         .background(.white, in: .rect(cornerRadius: 22, style: .continuous))

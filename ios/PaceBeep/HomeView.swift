@@ -102,7 +102,7 @@ private struct NextCard: View {
             // Long names (a coach writing a whole title) get a smaller size instead of a third line.
             Text(workout.name).font(.display(workout.name.count > 18 ? 34 : 46)).lineLimit(3).minimumScaleFactor(0.6).direction(of: workout.name)
             HStack(spacing: 20) {
-                stat("\(Int((workout.total / 60).rounded()))", "min")
+                stat("\(workout.hasWaits ? "~" : "")\(Int((workout.total / 60).rounded()))", "min")
                 if let pace = workout.pace { stat(pace, "/km") }
                 if let speed = workout.speed { stat(speed, "km/h") }
             }
@@ -145,7 +145,7 @@ private struct WorkoutRow: View {
                 .frame(width: 44)
                 VStack(alignment: .leading, spacing: 3) {
                     Text(workout.name).font(.display(18)).direction(of: workout.name)
-                    Text([ "\(Int((workout.total / 60).rounded())) min", workout.paceText ].compactMap { $0 }.joined(separator: " · "))
+                    Text([ "\(workout.hasWaits ? "~" : "")\(Int((workout.total / 60).rounded())) min", workout.paceText ].compactMap { $0 }.joined(separator: " · "))
                         .font(.footnote).foregroundStyle(Theme.muted)
                 }
                 Spacer(minLength: 0)

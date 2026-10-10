@@ -23,7 +23,10 @@ struct ContentView: View {
             }
         }
         .tint(Theme.signal)
-        .onAppear { runner.onRun = coach.upload }
+        .onAppear {
+            runner.onRun = coach.upload
+            NextIntent.handler = runner.advance(from:)
+        }
         .task(id: scenePhase) { if scenePhase == .active { await coach.sync() } }
     }
 }

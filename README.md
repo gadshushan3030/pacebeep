@@ -88,6 +88,8 @@ The app talks to `https://pacebeep.vercel.app` (`SERVER_URL` in `ios/Config.xcco
 
 The whole workout is rendered into one audio track (silence with the beeps at their exact times) and played with the background audio mode, so iOS keeps the app alive with the screen locked and the beeps can't drift. After a run the app shows whether the audio played without gaps and how late the voice cues were.
 
+A full workout (gym) plays the same way up to each part that waits for a tap: a set done by reps waits for **Done**, and a run after strength waits for **Ready** (getting on the treadmill). The tap renders and plays the next stretch (the rest, with its beeps); a silent loop keeps the app alive in between. Done, Skip (a rest before a set) and Ready are also buttons on the Live Activity, so the phone can stay locked; reps and weight are the plan unless changed with − and + in the app.
+
 ## Deploy your own (Vercel + Neon)
 
 1. Import the repo in Vercel with **Root Directory = `web`**.

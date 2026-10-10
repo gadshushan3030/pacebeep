@@ -29,7 +29,7 @@ You are setting up PaceBeep (repo: pacebeep, public, open source): an interval-r
 
 ### Status
 - **/web is built and deployed**: auth (incl. Google sign-in), OAuth for agents, MCP tools below, dashboard, workouts, account deletion, `/privacy` and `/terms`. Verified: full OAuth flow, idempotent replays, cross-user isolation, per-user disconnect.
-- **/ios works end to end**: signs in as a native OAuth client (DCR, redirect `app.vercel.pacebeep:/oauth/callback`, PKCE), lists `GET /api/workouts`, plays a workout as one rendered audio track (beeps on exact times, background-audio mode, Live Activity), and sends `POST /api/runs` with the RPE through an offline outbox. No GPS yet: intervals are timed, which also fits a treadmill.
+- **/ios works end to end**: signs in as a native OAuth client (DCR, redirect `app.vercel.pacebeep:/oauth/callback`, PKCE), lists `GET /api/workouts`, plays a workout as rendered audio tracks (beeps on exact times, background-audio mode, Live Activity), one per stretch between parts that wait for a tap in a full workout (strength sets, Ready before a run; Done/Skip/Ready also on the Live Activity), and sends `POST /api/runs` with the RPE through an offline outbox. No GPS yet: intervals are timed, which also fits a treadmill.
 - **Next**: GPS distance/pace outdoors; TestFlight (paid program); password reset (email provider).
 
 ### Architecture

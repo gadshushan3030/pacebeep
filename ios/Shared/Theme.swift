@@ -12,10 +12,10 @@ enum Theme {
     static let sent = Color(hex: 0x1B6E43)
     static let bad = Color(hex: 0xC2362B)
 
-    /// Background and text for a phase of the run: orange to run, blue to rest, ink otherwise.
+    /// Background and text for a phase of the run: orange to run (or lift), blue to rest, ink otherwise.
     static func phase(_ kind: String) -> (background: Color, text: Color) {
         switch kind {
-        case "work": (signal, ink)
+        case "work", "set": (signal, ink)
         case "rest": (rest, paper)
         default: (ink, paper)
         }
@@ -24,7 +24,7 @@ enum Theme {
     /// One segment of a progress strip on that phase's background.
     static func strip(on kind: String, done: Bool, current: Bool) -> Color {
         switch kind {
-        case "work": done ? ink : current ? .white : Color(hex: 0xF2A389)
+        case "work", "set": done ? ink : current ? .white : Color(hex: 0xF2A389)
         case "rest": done ? paper : current ? Color(hex: 0x8FB0FF) : Color(hex: 0x4565C2)
         default: done ? paper : current ? signalOnDark : Color(hex: 0x4A4D55)
         }
@@ -33,7 +33,7 @@ enum Theme {
     /// A segment's own color in a plan (structure, not progress).
     static func planColor(_ kind: String, onDark: Bool) -> Color {
         switch kind {
-        case "work": signal
+        case "work", "set": signal
         case "rest": onDark ? Color(hex: 0x3F63C9) : rest
         default: onDark ? muted : Color(hex: 0x8A8D94)
         }
