@@ -11,15 +11,17 @@ import {
   runInput,
   summary,
   updateWorkout,
+  workoutChanges,
   workoutFields,
   workoutInput,
 } from "@/lib/workouts";
 
-const INSTRUCTIONS = `PaceBeep: interval running. You coach the signed-in runner.
+const INSTRUCTIONS = `PaceBeep: interval running, and full gym workouts. You coach the signed-in runner.
 
 - get_summary first: recent runs and upcoming workouts.
-- Workouts are plans: warmup, repeats × (work, rest), cooldown, optional target pace (seconds per km) and date.
+- Workouts are plans with an optional date. An interval run: warmup, repeats × (work, rest), cooldown, optional target pace (seconds per km).
 - The runner's iPhone app shows workouts scheduled for today or later (and unscheduled ones) and plays them as timed intervals with beeps, so plan by time: warmup_sec, work_sec, rest_sec, cooldown_sec. It works on a treadmill too.
+- A full workout (gym) is \`blocks\` instead of repeats/work_sec: an ordered list of strength exercises and interval runs; you choose the order. A strength set waits until the runner taps Done (a timed set counts down instead), then rest_sec counts down with beeps; a run after strength waits for a tap to start. Its sets come back in the run as intervals of kind "set" with the reps and weight actually done.
 - Runs are what happened. source "device" = recorded by the phone; "manual" = the runner told you. Never invent measurements.
 - run feedback (RPE 1-10, notes) is the runner's self-report; keep it separate from measured data.
 - Every write takes request_id: generate a new UUID per logical save and reuse it when retrying; replays never duplicate.
@@ -73,7 +75,7 @@ export function buildServer(userId: string) {
     "create_workout",
     {
       title: "Create a workout",
-      description: "Creates an interval workout plan and returns workout_id.",
+      description: "Creates a workout plan (an interval run, or a full workout with blocks) and returns workout_id.",
       inputSchema: workoutInput.extend({ request_id: requestId }),
       annotations: WRITE,
     },
@@ -104,8 +106,8 @@ export function buildServer(userId: string) {
     "update_workout",
     {
       title: "Update a workout",
-      description: "Changes fields of an existing workout plan. Setting the same values again is harmless.",
-      inputSchema: z.object({ workout_id: z.uuid(), changes: workoutInput.partial() }),
+      description: "Changes fields of an existing workout plan. Setting the same values again is harmless. Giving blocks replaces them all.",
+      inputSchema: z.object({ workout_id: z.uuid(), changes: workoutChanges }),
       annotations: WRITE,
     },
     async ({ workout_id, changes }) => json({ workout_id: await updateWorkout(userId, workout_id, changes), verify_with: "get_workout" }),

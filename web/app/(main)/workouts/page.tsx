@@ -1,6 +1,6 @@
 import { removeWorkout } from "@/app/actions";
 import { requireUser } from "@/lib/session";
-import { describeWorkout, fmtDuration, listWorkouts } from "@/lib/workouts";
+import { describeBlock, describeWorkout, fmtDuration, listWorkouts } from "@/lib/workouts";
 import { NewWorkoutForm } from "./NewWorkoutForm";
 
 export default async function WorkoutsPage() {
@@ -19,10 +19,16 @@ export default async function WorkoutsPage() {
                 {w.name} {w.source === "assistant" && <span className="muted text-xs">· by assistant</span>}
               </div>
               <div className="muted text-sm">
-                {w.warmup_sec > 0 && `${fmtDuration(w.warmup_sec)} warmup · `}
-                {describeWorkout(w)}
-                {w.cooldown_sec > 0 && ` · ${fmtDuration(w.cooldown_sec)} cooldown`}
-                {w.target_pace_sec_per_km && ` · ${fmtDuration(w.target_pace_sec_per_km)}/km`}
+                {w.blocks ? (
+                  w.blocks.map(describeBlock).join(" · ")
+                ) : (
+                  <>
+                    {w.warmup_sec > 0 && `${fmtDuration(w.warmup_sec)} warmup · `}
+                    {describeWorkout(w)}
+                    {w.cooldown_sec > 0 && ` · ${fmtDuration(w.cooldown_sec)} cooldown`}
+                    {w.target_pace_sec_per_km && ` · ${fmtDuration(w.target_pace_sec_per_km)}/km`}
+                  </>
+                )}
                 {w.scheduled_for && ` · ${w.scheduled_for}`}
               </div>
             </div>
