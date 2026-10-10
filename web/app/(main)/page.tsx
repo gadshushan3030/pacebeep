@@ -64,7 +64,7 @@ export default async function Dashboard() {
                   <div key={w.id} className="flex flex-1 flex-col gap-1.5">
                     <span dir="auto" className="display text-xl leading-[1.05] [font-stretch:76%]">{w.name}</span>
                     <span className={`text-[13px] ${isToday ? "text-[var(--on-inverse-muted)]" : "muted"}`}>
-                      {Math.round(totalSec(w) / 60)} min{w.target_pace_sec_per_km && ` · ${fmtDuration(w.target_pace_sec_per_km)} /km`}
+                      {w.blocks && "~"}{Math.round(totalSec(w) / 60)} min{w.target_pace_sec_per_km && ` · ${fmtDuration(w.target_pace_sec_per_km)} /km`}
                     </span>
                     {w.done && (
                       <span className={`pill mt-auto self-start ${isToday ? "bg-[var(--on-inverse)] text-[var(--inverse)]" : "bg-[var(--inverse)] text-[var(--on-inverse)]"}`}>

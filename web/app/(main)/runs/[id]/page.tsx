@@ -1,11 +1,17 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/session";
-import { fmtDuration, formatDate, getRun } from "@/lib/workouts";
+import { fmtDuration, fmtSet, formatDate, getRun, type Run } from "@/lib/workouts";
 
 const TZ = "Asia/Jerusalem";
-const COLOR = { warmup: "var(--neutral)", work: "var(--signal)", rest: "var(--rest)", cooldown: "var(--neutral)" } as const;
+const COLOR = { warmup: "var(--neutral)", work: "var(--signal)", rest: "var(--rest)", cooldown: "var(--neutral)", set: "var(--signal)" } as const;
 const RPE_WORD = ["", "very easy", "very easy", "easy", "easy", "moderate", "moderate", "hard", "hard", "very hard", "all out"];
+
+type Interval = Run["intervals"][number];
+// A strength set by reps shows reps and weight; everything else shows time.
+const plannedText = (iv: Interval) =>
+  iv.planned_reps != null ? fmtSet({ reps: iv.planned_reps, weight_kg: iv.planned_weight_kg }) : iv.planned_sec != null ? fmtDuration(iv.planned_sec) : "–";
+const actualText = (iv: Interval) => (iv.reps != null ? fmtSet(iv) : fmtDuration(iv.actual_sec));
 
 export default async function RunPage({ params }: PageProps<"/runs/[id]">) {
   const user = await requireUser();
@@ -16,6 +22,7 @@ export default async function RunPage({ params }: PageProps<"/runs/[id]">) {
   const seconds = Math.round((new Date(run.ended_at).getTime() - new Date(run.started_at).getTime()) / 1000);
   const longest = Math.max(1, ...run.intervals.map((iv) => Math.max(iv.planned_sec ?? 0, iv.actual_sec)));
   const work = run.intervals.filter((iv) => iv.kind === "work");
+  const sets = run.intervals.filter((iv) => iv.kind === "set").length;
   const repsDone = work.filter((iv) => iv.planned_sec == null || iv.actual_sec >= iv.planned_sec - 1).length;
   const rated = [...run.feedback].reverse().find((f) => f.rpe != null);
   const notes = run.feedback.filter((f) => f.notes);
@@ -54,13 +61,14 @@ export default async function RunPage({ params }: PageProps<"/runs/[id]">) {
               </thead>
               <tbody>
                 {run.intervals.map((iv, i) => {
-                  const label = iv.kind === "work" ? `Run ${++rep}` : { warmup: "Warm up", rest: "Rest", cooldown: "Cool down" }[iv.kind];
+                  const label =
+                    iv.kind === "set" ? iv.exercise ?? "Set" : iv.kind === "work" ? `Run ${++rep}` : { warmup: "Warm up", rest: "Rest", cooldown: "Cool down" }[iv.kind];
                   const planned = iv.planned_sec ?? iv.actual_sec;
                   return (
                     <tr key={i} className="border-t border-[var(--border)]">
-                      <td className={`py-2.5 ${iv.kind === "work" ? "font-bold" : ""}`}>{label}</td>
-                      <td>{iv.planned_sec != null ? fmtDuration(iv.planned_sec) : "–"}</td>
-                      <td>{fmtDuration(iv.actual_sec)}</td>
+                      <td dir="auto" className={`py-2.5 ${iv.kind === "work" || iv.kind === "set" ? "font-bold" : ""}`}>{label}</td>
+                      <td>{plannedText(iv)}</td>
+                      <td>{actualText(iv)}</td>
                       {withPace && <td>{iv.avg_pace_sec_per_km ? fmtDuration(iv.avg_pace_sec_per_km) : "–"}</td>}
                       <td>
                         {/* The track is the plan; the fill is what was run. */}
@@ -96,6 +104,7 @@ export default async function RunPage({ params }: PageProps<"/runs/[id]">) {
           </section>
           <section aria-label="Summary" className="grid gap-2.5 [grid-template-columns:repeat(auto-fit,minmax(120px,1fr))]">
             <Fact value={fmtDuration(seconds)} label="total" />
+            {sets > 0 && <Fact value={`${sets}`} label="sets" />}
             {work.length > 0 && <Fact value={`${repsDone} / ${work.length}`} label="reps" />}
             {run.distance_m != null && <Fact value={(run.distance_m / 1000).toFixed(2)} label="km" />}
           </section>

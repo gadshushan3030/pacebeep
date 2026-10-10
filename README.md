@@ -31,7 +31,7 @@ On the web, the week your coach planned, what you ran and how it felt, and which
 
 - **Accounts**: "Continue with Apple" (when the four `APPLE_*` variables are set), "Continue with Google" (when `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET` are set) or email + password (Better Auth). With Apple or Google on, new accounts come only from them, whose emails are verified, so nobody can pre-register a password account on someone else's email; password sign-in keeps working for existing accounts. Set `SIGNUP_ENABLED=false` to close registration entirely. Every new account starts with three workouts, so the app has something to play before an assistant is connected.
 - **Agents**: an assistant registers itself (dynamic client registration), the user signs in and approves it on `/oauth/consent`, and gets an access token bound to `<BETTER_AUTH_URL>/mcp`. `/mcp` also checks on every request that the user's approval still exists, so **Disconnect** on the dashboard cuts access at once (for that user only).
-- **Data**: `workouts` (plans), `runs` (what happened: `device` = recorded by the phone, `manual` = entered/reported) and `run_feedback` (RPE and notes – self-reported, kept apart from measurements). Every write carries a `request_id`; replaying it returns the same row and never duplicates.
+- **Data**: `workouts` (plans: an interval run, or a full workout whose `blocks` list strength exercises and runs in the order the coach chose), `runs` (what happened: `device` = recorded by the phone, `manual` = entered/reported) and `run_feedback` (RPE and notes – self-reported, kept apart from measurements). Every write carries a `request_id`; replaying it returns the same row and never duplicates.
 
 ![Data model: workouts (the plan), runs (what happened), run_feedback (how it felt)](docs/data-model.svg)
 
@@ -57,7 +57,7 @@ The app is one more OAuth client of the same server: it registers itself as a na
 
 | Route | What it does |
 |---|---|
-| `GET /api/workouts` | Workouts scheduled for today or later, then unscheduled ones; `done` once a run was recorded for it |
+| `GET /api/workouts` | Workouts scheduled for today or later, then unscheduled ones; `done` once a run was recorded for it. Full workouts (`blocks`) only with `?blocks=1`, so app versions from before them keep working |
 | `POST /api/runs` | `{ request_id, run, feedback? }`: stores the run as `device`, plus the RPE. Idempotent, so the app's offline outbox resends until it gets a 2xx |
 
 ## Run locally (web)
@@ -87,6 +87,8 @@ Requires Xcode 26 and an Apple ID (a free one works; the app then expires after 
 The app talks to `https://pacebeep.vercel.app` (`SERVER_URL` in `ios/Config.xcconfig`). Sign in once, ask your assistant to plan your week, and the workouts show up under **From your coach**; pull to refresh. Workouts are cached and finished runs wait in an outbox, so a gym without signal is fine.
 
 The whole workout is rendered into one audio track (silence with the beeps at their exact times) and played with the background audio mode, so iOS keeps the app alive with the screen locked and the beeps can't drift. After a run the app shows whether the audio played without gaps and how late the voice cues were.
+
+A full workout (gym) plays the same way up to each part that waits for a tap: a set done by reps waits for **Done**, and a run after strength waits for **Ready** (getting on the treadmill). The tap renders and plays the next stretch (the rest, with its beeps); a silent loop keeps the app alive in between. Done, Skip (a rest before a set) and Ready are also buttons on the Live Activity, so the phone can stay locked; reps and weight are the plan unless changed with − and + in the app.
 
 ## Deploy your own (Vercel + Neon)
 
