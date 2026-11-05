@@ -2,9 +2,13 @@
 
 Interval running with an AI coach. Your assistant (ChatGPT, Claude or any MCP client) plans the intervals over OAuth; the iPhone app plays them with beeps that keep going with the screen locked, and sends each run back.
 
-**[pacebeep.vercel.app](https://pacebeep.vercel.app)** · [Connect ChatGPT](#connect-chatgpt) · [Run your own](#deploy-your-own-vercel--neon)
+[![Download on the App Store](https://img.shields.io/badge/App_Store-Download-black?logo=apple)](https://apps.apple.com/app/pacebeep/id6818211974)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![GitHub stars](https://img.shields.io/github/stars/gadshushan3030/pacebeep?style=social)](https://github.com/gadshushan3030/pacebeep/stargazers)
 
-The live site is open: sign in with any Google account.
+**[Get it on the App Store](https://apps.apple.com/app/pacebeep/id6818211974)** · **[pacebeep.vercel.app](https://pacebeep.vercel.app)** · [Connect ChatGPT](#connect-chatgpt) · [Run your own](#deploy-your-own-vercel--neon)
+
+Free, open source (MIT), no ads, no subscription, no tracking. The live site is open: sign in with Apple or Google.
 
 ![The iPhone app: today's workout from the coach, a work interval, a rest interval, and the summary with the RPE that goes back to the coach](docs/screenshots/app.png)
 
@@ -124,8 +128,12 @@ A full workout (gym) plays the same way up to each part that waits for a tap: a 
 
 ## Roadmap
 
-- iOS: GPS distance and pace for outdoor runs; TestFlight (needs the paid Apple Developer Program).
+- iOS: GPS distance and pace for outdoor runs.
 - Password reset for password accounts (needs an email provider, e.g. Resend).
+
+## Contributing
+
+Issues and pull requests are welcome, from a typo to a new MCP tool. See [CONTRIBUTING.md](.github/CONTRIBUTING.md). If PaceBeep is useful to you, a star helps other runners find it.
 
 ## License
 

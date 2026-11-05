@@ -24,6 +24,8 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
         passwordSignup={process.env.SIGNUP_ENABLED !== "false" && !googleEnabled && !appleEnabled}
       />
       <p className="muted text-center text-xs">
+        <a href="https://apps.apple.com/app/pacebeep/id6818211974" className="underline">App Store</a> ·{" "}
+        <a href="https://github.com/gadshushan3030/pacebeep" className="underline">Open source</a> ·{" "}
         <Link href="/privacy" className="underline">Privacy</Link> · <Link href="/terms" className="underline">Terms</Link>
       </p>
     </main>
