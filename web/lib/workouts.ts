@@ -43,6 +43,7 @@ export const workoutFields = {
   work_sec: runFields.work_sec.optional().describe("Interval run only; leave out when giving blocks"),
   blocks: z.array(blockInput).min(1).max(30).optional().describe("A full workout, played in order: strength exercises and runs"),
   scheduled_for: z.iso.date().optional().describe("YYYY-MM-DD"),
+  scheduled_time: z.iso.time({ precision: -1 }).optional().describe("HH:MM, the runner's local time of day; the phone reminds them then"),
 };
 export const workoutInput = z.object(workoutFields);
 export type WorkoutInput = z.infer<typeof workoutInput>;
@@ -107,8 +108,10 @@ export function createWorkout(userId: string, requestId: string, input: WorkoutI
   if (!input.blocks === (input.repeats == null || input.work_sec == null)) {
     throw new Error("give either blocks (a full workout) or repeats and work_sec (an interval run)");
   }
-  // pg sends a JS array as a Postgres array, not JSON.
-  return insertOnce("workouts", userId, requestId, { ...input, blocks: input.blocks && JSON.stringify(input.blocks), source });
+  // pg sends a JS array as a Postgres array, not JSON. The coach's workouts wait for the runner's
+  // approval in the app; the runner's own are approved as they are.
+  const status = source === "assistant" ? "pending" : "approved";
+  return insertOnce("workouts", userId, requestId, { ...input, blocks: input.blocks && JSON.stringify(input.blocks), source, status });
 }
 
 // A new account starts with these, so the app has something to play before an assistant is
@@ -137,10 +140,25 @@ export async function updateWorkout(userId: string, workoutId: string, changes: 
       : changes;
   const cols = Object.keys(values).filter((c) => values[c] !== undefined);
   if (!cols.length) throw new Error("nothing to update");
+  // A change by the coach goes back to the runner for approval. Setting the same values again
+  // changes nothing, so the status stays: SET sees the old row, so the comparison is old vs. new.
+  const params = cols.map((_, i) => `$${i + 3}`);
   const [row] = await sql<{ id: string }>(
-    `update workouts set ${cols.map((c, i) => `${c} = $${i + 3}`).join(", ")}, updated_at = now()
+    `update workouts set ${cols.map((c, i) => `${c} = ${params[i]}`).join(", ")}, updated_at = now(),
+       status = case when (${cols.join(", ")}) is distinct from (${params.join(", ")}) then 'pending' else status end
      where id = $1 and user_id = $2 returning id`,
     [workoutId, userId, ...cols.map((c) => values[c])],
+  );
+  if (!row) throw new Error("workout not found");
+  return row.id;
+}
+
+// The runner approves a workout the coach planned, optionally moving it to another time of day.
+export async function approveWorkout(userId: string, workoutId: string, scheduledTime?: string) {
+  const [row] = await sql<{ id: string }>(
+    `update workouts set status = 'approved', scheduled_time = coalesce($3, scheduled_time), updated_at = now()
+     where id = $1 and user_id = $2 returning id`,
+    [workoutId, userId, scheduledTime],
   );
   if (!row) throw new Error("workout not found");
   return row.id;
@@ -160,12 +178,12 @@ export async function addRunFeedback(userId: string, requestId: string, runId: s
   return insertOnce("run_feedback", userId, requestId, { run_id: runId, rpe, notes });
 }
 
-export type Workout = WorkoutInput & { id: string; source: string; created_at: Date };
+export type Workout = WorkoutInput & { id: string; source: string; status: "pending" | "approved"; created_at: Date };
 
 export function listWorkouts(userId: string, limit = 50) {
   return sql<Workout>(
     `select id, source, name, notes, warmup_sec, repeats, work_sec, rest_sec, cooldown_sec,
-            target_pace_sec_per_km, blocks, scheduled_for, created_at
+            target_pace_sec_per_km, blocks, scheduled_for, scheduled_time, status, created_at
      from workouts where user_id = $1
      order by scheduled_for nulls last, created_at desc limit $2`,
     [userId, limit],
@@ -178,7 +196,7 @@ export function listWorkouts(userId: string, limit = 50) {
 export function upcomingWorkouts(userId: string, fromDate: string, withBlocks: boolean, limit = 30) {
   return sql<Workout & { done: boolean }>(
     `select w.id, w.name, w.notes, w.warmup_sec, w.repeats, w.work_sec, w.rest_sec, w.cooldown_sec,
-            w.target_pace_sec_per_km, w.blocks, w.scheduled_for,
+            w.target_pace_sec_per_km, w.blocks, w.scheduled_for, w.scheduled_time, w.status,
             exists (select 1 from runs r where r.workout_id = w.id) as done
      from workouts w where w.user_id = $1 and (w.scheduled_for >= $2 or w.scheduled_for is null)
        and ($3 or w.blocks is null)
@@ -256,7 +274,7 @@ export async function summary(userId: string) {
       [userId],
     ),
     sql<Workout>(
-      `select id, name, scheduled_for, repeats, work_sec, rest_sec, blocks from workouts
+      `select id, name, scheduled_for, scheduled_time, status, repeats, work_sec, rest_sec, blocks from workouts
        where user_id = $1 and scheduled_for >= current_date order by scheduled_for limit 7`,
       [userId],
     ),

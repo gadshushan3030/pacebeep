@@ -19,7 +19,8 @@ import {
 const INSTRUCTIONS = `PaceBeep: interval running, and full gym workouts. You coach the signed-in runner.
 
 - get_summary first: recent runs and upcoming workouts.
-- Workouts are plans with an optional date. An interval run: warmup, repeats × (work, rest), cooldown, optional target pace (seconds per km).
+- Workouts are plans with an optional date (scheduled_for) and local time of day (scheduled_time). A workout you create or change waits for the runner's approval in the app, where they may move the time: status "pending" until then, "approved" after. Check status on the next read before counting on it.
+- An interval run: warmup, repeats × (work, rest), cooldown, optional target pace (seconds per km).
 - The runner's iPhone app shows workouts scheduled for today or later (and unscheduled ones) and plays them as timed intervals with beeps, so plan by time: warmup_sec, work_sec, rest_sec, cooldown_sec. It works on a treadmill too.
 - A full workout (gym) is \`blocks\` instead of repeats/work_sec: an ordered list of strength exercises and interval runs; you choose the order. A strength set waits until the runner taps Done (a timed set counts down instead), then rest_sec counts down with beeps; a run after strength waits for a tap to start. Its sets come back in the run as intervals of kind "set" with the reps and weight actually done.
 - Runs are what happened. source "device" = recorded by the phone; "manual" = the runner told you. Never invent measurements.
@@ -89,7 +90,7 @@ export function buildServer(userId: string) {
     "plan_week",
     {
       title: "Plan several workouts",
-      description: "Creates several scheduled workouts at once (each with its own request_id and scheduled_for). Returns their ids.",
+      description: "Creates several scheduled workouts at once (each with its own request_id and scheduled_for, optionally scheduled_time). Returns their ids.",
       inputSchema: z.object({
         workouts: z.array(workoutInput.extend({ request_id: requestId, scheduled_for: workoutFields.scheduled_for.unwrap() })).min(1).max(14),
       }),
@@ -106,7 +107,7 @@ export function buildServer(userId: string) {
     "update_workout",
     {
       title: "Update a workout",
-      description: "Changes fields of an existing workout plan. Setting the same values again is harmless. Giving blocks replaces them all.",
+      description: "Changes fields of an existing workout plan. Setting the same values again is harmless; a real change puts the workout back to pending until the runner approves it. Giving blocks replaces them all.",
       inputSchema: z.object({ workout_id: z.uuid(), changes: workoutChanges }),
       annotations: WRITE,
     },

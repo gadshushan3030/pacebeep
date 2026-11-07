@@ -20,7 +20,8 @@ export function NewWorkoutForm() {
       <Field label="Target pace (m:ss/km)"><input name="target_pace" pattern="\d{1,2}:\d{2}" placeholder="5:00" className="input" /></Field>
       <Field label="Warmup (min)"><input name="warmup_min" type="number" min={0} max={120} defaultValue={10} className="input" /></Field>
       <Field label="Cooldown (min)"><input name="cooldown_min" type="number" min={0} max={120} defaultValue={5} className="input" /></Field>
-      <Field label="Date" className="col-span-2"><input name="scheduled_for" type="date" className="input" /></Field>
+      <Field label="Date"><input name="scheduled_for" type="date" className="input" /></Field>
+      <Field label="Time"><input name="scheduled_time" type="time" className="input" /></Field>
       {error && <p role="alert" className="col-span-2 text-sm text-[var(--bad)] sm:col-span-4">{error}</p>}
       <button className="btn col-span-2 sm:col-span-4" disabled={pending}>Add workout</button>
     </form>

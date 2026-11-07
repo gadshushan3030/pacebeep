@@ -2,6 +2,8 @@ import { Pool, types } from "pg";
 
 // DATE columns stay "YYYY-MM-DD" strings instead of local-midnight Date objects.
 types.setTypeParser(1082, (v) => v);
+// TIME columns as "HH:MM", the shape the API takes, instead of "18:00:00".
+types.setTypeParser(1083, (v) => v.slice(0, 5));
 
 const g = globalThis as { pgPool?: Pool };
 export const pool = (g.pgPool ??= new Pool({ connectionString: process.env.DATABASE_URL, max: 5 }));
