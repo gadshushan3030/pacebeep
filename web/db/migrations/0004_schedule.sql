@@ -7,3 +7,4 @@
 alter table workouts
   add column scheduled_time time,
   add column status text not null default 'approved' check (status in ('pending', 'approved'));
+alter table workouts add constraint workouts_time_needs_date check (scheduled_time is null or scheduled_for is not null);

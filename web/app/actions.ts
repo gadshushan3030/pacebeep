@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { pool } from "@/lib/db";
 import { requireUser } from "@/lib/session";
-import { approveWorkout, createWorkout, deleteWorkout, workoutInput } from "@/lib/workouts";
+import { approveWorkout, ClientError, createWorkout, deleteWorkout, workoutInput } from "@/lib/workouts";
 
 export async function logout() {
   await auth.api.signOut({ headers: await headers() });
@@ -38,7 +38,8 @@ export async function addWorkout(_prev: string | null, form: FormData) {
 
 export async function acceptWorkout(workoutId: string) {
   const user = await requireUser();
-  await approveWorkout(user.id, workoutId);
+  // Deleted in another tab meanwhile: nothing to approve, the list just refreshes.
+  await approveWorkout(user.id, workoutId).catch((e) => { if (!(e instanceof ClientError)) throw e; });
   revalidatePath("/", "layout");
 }
 
