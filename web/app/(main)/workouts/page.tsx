@@ -1,4 +1,4 @@
-import { removeWorkout } from "@/app/actions";
+import { acceptWorkout, removeWorkout } from "@/app/actions";
 import { requireUser } from "@/lib/session";
 import { describeBlock, describeWorkout, fmtDuration, listWorkouts } from "@/lib/workouts";
 import { NewWorkoutForm } from "./NewWorkoutForm";
@@ -17,6 +17,7 @@ export default async function WorkoutsPage() {
             <div className="min-w-0 flex-1">
               <div dir="auto" className="font-medium">
                 {w.name} {w.source === "assistant" && <span className="muted text-xs">· by assistant</span>}
+                {w.status === "pending" && <span className="ml-1 text-xs font-semibold text-[var(--warn)]">· pending</span>}
               </div>
               <div className="muted text-sm">
                 {w.blocks ? (
@@ -30,8 +31,14 @@ export default async function WorkoutsPage() {
                   </>
                 )}
                 {w.scheduled_for && ` · ${w.scheduled_for}`}
+                {w.scheduled_time && ` ${w.scheduled_time}`}
               </div>
             </div>
+            {w.status === "pending" && (
+              <form action={acceptWorkout.bind(null, w.id)}>
+                <button className="btn btn-ghost min-h-9 px-3 text-sm">Approve</button>
+              </form>
+            )}
             <form action={removeWorkout.bind(null, w.id)}>
               <button aria-label={`Delete ${w.name}`} className="muted size-11 rounded-full hover:bg-black/5 dark:hover:bg-white/10">✕</button>
             </form>

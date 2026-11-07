@@ -43,8 +43,12 @@ export const workoutFields = {
   work_sec: runFields.work_sec.optional().describe("Interval run only; leave out when giving blocks"),
   blocks: z.array(blockInput).min(1).max(30).optional().describe("A full workout, played in order: strength exercises and runs"),
   scheduled_for: z.iso.date().optional().describe("YYYY-MM-DD"),
+  scheduled_time: z.iso.time({ precision: -1 }).optional().describe("HH:MM, the runner's local time of day; the phone reminds them then"),
 };
-export const workoutInput = z.object(workoutFields);
+// The time check is repeated by the migration's workouts_time_needs_date, which also covers updates.
+export const workoutInput = z
+  .object(workoutFields)
+  .refine((w) => !w.scheduled_time || w.scheduled_for, { path: ["scheduled_time"], message: "scheduled_time needs a scheduled_for date" });
 export type WorkoutInput = z.infer<typeof workoutInput>;
 // For updates. Without the defaults: zod 4 applies them inside .partial() too, so changing only
 // the date would have reset the warmup, rest and cooldown to 0.
@@ -81,6 +85,23 @@ export const runInput = z.object({
 });
 export type RunInput = z.infer<typeof runInput>;
 
+// An error the caller caused, with the HTTP status an API route answers.
+export class ClientError extends Error {
+  status: 400 | 404;
+  constructor(message: string, status: 400 | 404) {
+    super(message);
+    this.status = status;
+  }
+}
+
+// The migration's check: a time of day only makes sense on a day.
+function timeNeedsDate(error: unknown): never {
+  if ((error as { constraint?: string }).constraint === "workouts_time_needs_date") {
+    throw new ClientError("scheduled_time needs a scheduled_for date", 400);
+  }
+  throw error;
+}
+
 type Table = "workouts" | "runs" | "run_feedback";
 
 // Inserts once per (user, request_id). A replay returns the original id and changes nothing.
@@ -107,8 +128,10 @@ export function createWorkout(userId: string, requestId: string, input: WorkoutI
   if (!input.blocks === (input.repeats == null || input.work_sec == null)) {
     throw new Error("give either blocks (a full workout) or repeats and work_sec (an interval run)");
   }
-  // pg sends a JS array as a Postgres array, not JSON.
-  return insertOnce("workouts", userId, requestId, { ...input, blocks: input.blocks && JSON.stringify(input.blocks), source });
+  // pg sends a JS array as a Postgres array, not JSON. The coach's workouts wait for the runner's
+  // approval in the app; the runner's own are approved as they are.
+  const status = source === "assistant" ? "pending" : "approved";
+  return insertOnce("workouts", userId, requestId, { ...input, blocks: input.blocks && JSON.stringify(input.blocks), source, status }).catch(timeNeedsDate);
 }
 
 // A new account starts with these, so the app has something to play before an assistant is
@@ -127,7 +150,9 @@ export async function addStarterWorkouts(userId: string) {
   for (const [i, workout] of starterWorkouts.entries()) await createWorkout(userId, `starter-${i}`, workout, "app");
 }
 
-export async function updateWorkout(userId: string, workoutId: string, changes: Partial<WorkoutInput>) {
+// Returns the id and the columns whose value actually changed. A change by the coach ("assistant")
+// goes back to the runner for approval; the same values again change nothing and leave the status.
+export async function updateWorkout(userId: string, workoutId: string, changes: Partial<WorkoutInput>, source: "app" | "assistant") {
   // Blocks turn a workout into a full workout and repeats/work_sec back into an interval run;
   // whichever was given clears the other.
   const values: Record<string, unknown> = changes.blocks
@@ -137,12 +162,29 @@ export async function updateWorkout(userId: string, workoutId: string, changes: 
       : changes;
   const cols = Object.keys(values).filter((c) => values[c] !== undefined);
   if (!cols.length) throw new Error("nothing to update");
+  // The self-join keeps the old row in reach: SET and the status comparison see w (old values),
+  // RETURNING sees the new ones and compares them with old.
+  const params = cols.map((_, i) => `$${i + 3}`);
+  const [row] = await sql<{ id: string; changed: string[] }>(
+    `update workouts w set ${cols.map((c, i) => `${c} = ${params[i]}`).join(", ")}, updated_at = now(),
+       status = case when $${cols.length + 3} = 'assistant' and (${cols.map((c) => `w.${c}`).join(", ")}) is distinct from (${params.join(", ")})
+                     then 'pending' else w.status end
+     from workouts old where old.id = w.id and w.id = $1 and w.user_id = $2
+     returning w.id, array_remove(array[${cols.map((c) => `case when w.${c} is distinct from old.${c} then '${c}' end`).join(", ")}], null) as changed`,
+    [workoutId, userId, ...cols.map((c) => values[c]), source],
+  ).catch(timeNeedsDate);
+  if (!row) throw new ClientError("workout not found", 404);
+  return row;
+}
+
+// The runner approves a workout the coach planned, optionally moving it to another time of day.
+export async function approveWorkout(userId: string, workoutId: string, scheduledTime?: string) {
   const [row] = await sql<{ id: string }>(
-    `update workouts set ${cols.map((c, i) => `${c} = $${i + 3}`).join(", ")}, updated_at = now()
+    `update workouts set status = 'approved', scheduled_time = coalesce($3, scheduled_time), updated_at = now()
      where id = $1 and user_id = $2 returning id`,
-    [workoutId, userId, ...cols.map((c) => values[c])],
-  );
-  if (!row) throw new Error("workout not found");
+    [workoutId, userId, scheduledTime],
+  ).catch(timeNeedsDate);
+  if (!row) throw new ClientError("workout not found", 404);
   return row.id;
 }
 
@@ -160,12 +202,12 @@ export async function addRunFeedback(userId: string, requestId: string, runId: s
   return insertOnce("run_feedback", userId, requestId, { run_id: runId, rpe, notes });
 }
 
-export type Workout = WorkoutInput & { id: string; source: string; created_at: Date };
+export type Workout = WorkoutInput & { id: string; source: string; status: "pending" | "approved"; created_at: Date };
 
 export function listWorkouts(userId: string, limit = 50) {
   return sql<Workout>(
     `select id, source, name, notes, warmup_sec, repeats, work_sec, rest_sec, cooldown_sec,
-            target_pace_sec_per_km, blocks, scheduled_for, created_at
+            target_pace_sec_per_km, blocks, scheduled_for, scheduled_time, status, created_at
      from workouts where user_id = $1
      order by scheduled_for nulls last, created_at desc limit $2`,
     [userId, limit],
@@ -178,7 +220,7 @@ export function listWorkouts(userId: string, limit = 50) {
 export function upcomingWorkouts(userId: string, fromDate: string, withBlocks: boolean, limit = 30) {
   return sql<Workout & { done: boolean }>(
     `select w.id, w.name, w.notes, w.warmup_sec, w.repeats, w.work_sec, w.rest_sec, w.cooldown_sec,
-            w.target_pace_sec_per_km, w.blocks, w.scheduled_for,
+            w.target_pace_sec_per_km, w.blocks, w.scheduled_for, w.scheduled_time, w.status,
             exists (select 1 from runs r where r.workout_id = w.id) as done
      from workouts w where w.user_id = $1 and (w.scheduled_for >= $2 or w.scheduled_for is null)
        and ($3 or w.blocks is null)
@@ -256,7 +298,7 @@ export async function summary(userId: string) {
       [userId],
     ),
     sql<Workout>(
-      `select id, name, scheduled_for, repeats, work_sec, rest_sec, blocks from workouts
+      `select id, name, scheduled_for, scheduled_time, status, repeats, work_sec, rest_sec, blocks from workouts
        where user_id = $1 and scheduled_for >= current_date order by scheduled_for limit 7`,
       [userId],
     ),

@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { pool } from "@/lib/db";
 import { requireUser } from "@/lib/session";
-import { createWorkout, deleteWorkout, workoutInput } from "@/lib/workouts";
+import { approveWorkout, ClientError, createWorkout, deleteWorkout, workoutInput } from "@/lib/workouts";
 
 export async function logout() {
   await auth.api.signOut({ headers: await headers() });
@@ -27,12 +27,25 @@ export async function addWorkout(_prev: string | null, form: FormData) {
     cooldown_sec: minutes(form.get("cooldown_min")),
     target_pace_sec_per_km: /^\d{1,2}:\d{2}$/.test(pace) ? Number(pace.split(":")[0]) * 60 + Number(pace.split(":")[1]) : undefined,
     scheduled_for: String(form.get("scheduled_for") ?? "") || undefined,
+    scheduled_time: String(form.get("scheduled_time") ?? "") || undefined,
   });
   if (!parsed.success) return "Check the fields: " + parsed.error.issues.map((i) => i.path.join(".")).join(", ");
   // The form carries a UUID, so a double submit creates one workout, not two.
-  await createWorkout(user.id, String(form.get("request_id")), parsed.data, "app");
+  try {
+    await createWorkout(user.id, String(form.get("request_id")), parsed.data, "app");
+  } catch (error) {
+    if (error instanceof ClientError) return error.message;
+    throw error;
+  }
   revalidatePath("/", "layout");
   return null;
+}
+
+export async function acceptWorkout(workoutId: string) {
+  const user = await requireUser();
+  // Deleted in another tab meanwhile: nothing to approve, the list just refreshes.
+  await approveWorkout(user.id, workoutId).catch((e) => { if (!(e instanceof ClientError)) throw e; });
+  revalidatePath("/", "layout");
 }
 
 export async function removeWorkout(workoutId: string) {
