@@ -3,7 +3,7 @@
 import assert from "node:assert/strict";
 import { after, before, test } from "node:test";
 import { pool, sql } from "@/lib/db";
-import { approveWorkout, ClientError, createWorkout, getWorkout, summary, updateWorkout, upcomingWorkouts, type WorkoutInput } from "@/lib/workouts";
+import { approveWorkout, ClientError, createWorkout, getWorkout, summary, updateWorkout, upcomingWorkouts, workoutInput, type WorkoutInput } from "@/lib/workouts";
 
 const skip = !process.env.DATABASE_URL && "DATABASE_URL unset";
 const userId = `test-${Date.now()}`;
@@ -75,6 +75,8 @@ test("blocks round-trip as jsonb: same blocks stay approved, changed blocks go p
 
 test("a time needs a date: create, update and approve answer 400", { skip }, async () => {
   const noDate = { ...run, name: "no date", scheduled_for: undefined, scheduled_time: undefined };
+  // Rejected by the input schema first (the web form and the MCP tools parse with it), and by the DB behind it.
+  assert.deepEqual(workoutInput.safeParse({ ...noDate, scheduled_time: "07:00" }).error?.issues.map((i) => i.path), [["scheduled_time"]]);
   await assert.rejects(createWorkout(userId, "t1", { ...noDate, scheduled_time: "07:00" }, "app"), (e) => e instanceof ClientError && e.status === 400);
   const { id: bare } = await createWorkout(userId, "t2", noDate, "app");
   await assert.rejects(updateWorkout(userId, bare, { scheduled_time: "07:00" }, "assistant"), (e) => e instanceof ClientError && e.status === 400);

@@ -45,7 +45,10 @@ export const workoutFields = {
   scheduled_for: z.iso.date().optional().describe("YYYY-MM-DD"),
   scheduled_time: z.iso.time({ precision: -1 }).optional().describe("HH:MM, the runner's local time of day; the phone reminds them then"),
 };
-export const workoutInput = z.object(workoutFields);
+// The time check is repeated by the migration's workouts_time_needs_date, which also covers updates.
+export const workoutInput = z
+  .object(workoutFields)
+  .refine((w) => !w.scheduled_time || w.scheduled_for, { path: ["scheduled_time"], message: "scheduled_time needs a scheduled_for date" });
 export type WorkoutInput = z.infer<typeof workoutInput>;
 // For updates. Without the defaults: zod 4 applies them inside .partial() too, so changing only
 // the date would have reset the warmup, rest and cooldown to 0.

@@ -31,7 +31,12 @@ export async function addWorkout(_prev: string | null, form: FormData) {
   });
   if (!parsed.success) return "Check the fields: " + parsed.error.issues.map((i) => i.path.join(".")).join(", ");
   // The form carries a UUID, so a double submit creates one workout, not two.
-  await createWorkout(user.id, String(form.get("request_id")), parsed.data, "app");
+  try {
+    await createWorkout(user.id, String(form.get("request_id")), parsed.data, "app");
+  } catch (error) {
+    if (error instanceof ClientError) return error.message;
+    throw error;
+  }
   revalidatePath("/", "layout");
   return null;
 }
