@@ -3,6 +3,8 @@ import SwiftUI
 struct ContentView: View {
     @State private var runner = Runner()
     @State private var coach = Coach()
+    /// The workout whose reminder was tapped: shown up top, ready to start.
+    @State private var opened: String?
     @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
@@ -10,7 +12,7 @@ struct ContentView: View {
             switch runner.state {
             case .idle:
                 if coach.signedIn {
-                    HomeView(coach: coach, error: runner.error, start: runner.start)
+                    HomeView(coach: coach, error: runner.error, opened: opened) { opened = nil; runner.start($0) }
                 } else {
                     SignInView(coach: coach, start: runner.start)
                 }
@@ -26,6 +28,7 @@ struct ContentView: View {
         .onAppear {
             runner.onRun = coach.upload
             NextIntent.handler = runner.advance(from:)
+            Reminders.shared.onOpen = { opened = $0 }
         }
         .task(id: scenePhase) { if scenePhase == .active { await coach.sync() } }
     }

@@ -60,12 +60,22 @@ struct Workout: Identifiable {
     var targetPace: Int?
     /// YYYY-MM-DD
     var scheduledFor: String?
+    /// HH:MM, local time of day; the reminder fires then.
+    var scheduledTime: String?
+    /// Planned by the coach and not yet approved by the runner (no reminder until then).
+    var pending = false
     var done = false
 
     var id: String { serverId ?? name }
     /// Has parts that wait for a tap, so the total is only an estimate.
     var hasWaits: Bool { segments.contains(where: \.waits) }
     var total: Double { segments.reduce(0) { $0 + $1.length } }
+    /// The day and time as a moment in this phone's time zone (the server keeps neither).
+    var scheduledDate: Date? {
+        guard let day = parseDay(scheduledFor), let hm = scheduledTime?.split(separator: ":"), hm.count == 2,
+              let h = Int(hm[0]), let m = Int(hm[1]) else { return nil }
+        return Calendar.current.date(bySettingHour: h, minute: m, second: 0, of: day)
+    }
 
     /// Zero-length parts (no warmup, no rest) are left out.
     static func intervals(_ name: String, warmup: Double, reps: Int, work: Double, rest: Double, cooldown: Double, pace: Int? = nil) -> Workout {
