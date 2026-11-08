@@ -92,7 +92,8 @@ export function buildServer(userId: string) {
       title: "Plan several workouts",
       description: "Creates several scheduled workouts at once (each with its own request_id and scheduled_for, optionally scheduled_time). Returns their ids.",
       inputSchema: z.object({
-        workouts: z.array(workoutInput.extend({ request_id: requestId, scheduled_for: workoutFields.scheduled_for.unwrap() })).min(1).max(14),
+        // Not workoutInput.extend: zod 4 refuses to overwrite a key of a refined object schema.
+        workouts: z.array(z.object({ ...workoutFields, scheduled_for: workoutFields.scheduled_for.unwrap(), request_id: requestId })).min(1).max(14),
       }),
       annotations: WRITE,
     },
