@@ -1,14 +1,13 @@
 # Lint, type-check, migrate and test web/ against a real Postgres on every push and PR.
-# `npm test --if-present` is a no-op until a branch adds the test script (PR #20), so this
-# workflow can land first. Only `main` deploys (web/vercel.json); this is the check before it.
+# Only `main` deploys (web/vercel.json); this is the check before it. `main` requires the
+# `check` job to pass, so it runs on every PR with no paths filter: a required check that
+# never reports (an iOS-only PR) would block the merge forever. It takes under a minute.
 name: web
 
 on:
   push:
     branches: [main]
-    paths: ["web/**", ".github/workflows/web.yml"]
   pull_request:
-    paths: ["web/**", ".github/workflows/web.yml"]
 
 jobs:
   check:
