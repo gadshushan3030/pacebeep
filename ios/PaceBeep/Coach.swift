@@ -1,9 +1,10 @@
 import Foundation
 import Observation
 
-/// Workouts the assistant planned on the server, and runs going back to it. Both survive having
-/// no signal (a gym basement): the last workout list is cached, and runs wait in an outbox until
-/// the server answers. Every run carries a request_id, so sending one twice stores it once.
+/// Workouts the assistant planned on the server, and runs and approvals going back to it. All
+/// survive having no signal (a gym basement): the last workout list is cached, and runs and
+/// approvals wait in an outbox until the server answers. Every run carries a request_id, so
+/// sending one twice stores it once.
 @MainActor @Observable
 final class Coach {
     private(set) var workouts: [Workout] = []
@@ -11,15 +12,28 @@ final class Coach {
     private(set) var pendingRuns = 0
     private(set) var message: String?
     private(set) var lastSync: Date?
+    /// Ask whether to remind: the first time a scheduled or pending workout arrives from the coach.
+    var remindersOffer = false
 
     @ObservationIgnored private let auth = Auth()
     @ObservationIgnored private var outbox: [Upload] = []
+    @ObservationIgnored private var approvals: [Approval] = []
     @ObservationIgnored private var flushing = false
+    /// The list as the server sent it (plus approvals given here), cached; the reminders follow it.
+    @ObservationIgnored private var server: [ServerWorkout] = [] {
+        didSet {
+            workouts = server.map(\.workout)
+            UserDefaults.standard.set(try? JSONEncoder().encode(server), forKey: "workouts")
+            Reminders.schedule(workouts)
+        }
+    }
 
     init() {
         signedIn = auth.isSignedIn
-        if let data = UserDefaults.standard.data(forKey: "workouts") { workouts = Self.decode(data) }
+        if let data = UserDefaults.standard.data(forKey: "workouts") { server = Self.decode(data) }
+        workouts = server.map(\.workout)
         if let data = UserDefaults.standard.data(forKey: "outbox") { outbox = (try? JSONDecoder().decode([Upload].self, from: data)) ?? [] }
+        if let data = UserDefaults.standard.data(forKey: "approvals") { approvals = (try? JSONDecoder().decode([Approval].self, from: data)) ?? [] }
         pendingRuns = outbox.count
     }
 
@@ -37,11 +51,10 @@ final class Coach {
     func signOut() {
         auth.signOut()
         signedIn = false
-        workouts = []
-        UserDefaults.standard.removeObject(forKey: "workouts")
+        server = []
     }
 
-    /// Sends waiting runs, then fetches the workout list.
+    /// Sends waiting runs and approvals, then fetches the workout list.
     func sync() async {
         guard auth.isSignedIn else { return }
         await flush()
@@ -49,10 +62,15 @@ final class Coach {
             // blocks=1: full workouts too (an app from before them would fail to decode them).
             let (data, http) = try await auth.send(URLRequest(url: Auth.server.appending(path: "api/workouts").appending(queryItems: [.init(name: "blocks", value: "1")])))
             guard http.statusCode == 200 else { throw URLError(.badServerResponse) }
-            workouts = Self.decode(data)
-            UserDefaults.standard.set(data, forKey: "workouts")
+            server = Self.decode(data)
             lastSync = Date()
             message = nil
+            // Once, in context: the coach has planned something with a time, or something to approve.
+            if workouts.contains(where: { $0.pending || $0.scheduledTime != nil }), !UserDefaults.standard.bool(forKey: "remindersAsked"),
+               await Reminders.center.notificationSettings().authorizationStatus == .notDetermined {
+                UserDefaults.standard.set(true, forKey: "remindersAsked")
+                remindersOffer = true
+            }
         } catch {
             signedIn = auth.isSignedIn
             message = signedIn ? "No connection: showing the workouts saved on this phone." : "Signed out. Sign in again to get your workouts."
@@ -66,34 +84,65 @@ final class Coach {
         Task { await flush() }
     }
 
+    /// Approves a workout the coach planned, moved to `time` (HH:MM) when given. Shown approved at
+    /// once and sent like a run is; the reminder is scheduled from here, not from the answer.
+    func approve(_ workout: Workout, at time: String? = nil) {
+        guard let i = server.firstIndex(where: { $0.id == workout.id }) else { return }
+        var w = server[i]
+        w.status = "approved"
+        if let time { w.scheduled_time = time }
+        server[i] = w
+        approvals.append(Approval(workout_id: workout.id, scheduled_time: time))
+        saveOutbox()
+        Task { await flush() }
+    }
+
+    /// "Remind me" in the offer: the system prompt, then the reminders (denied: none, quietly).
+    func enableReminders() async {
+        _ = try? await Reminders.center.requestAuthorization(options: [.alert, .sound])
+        Reminders.schedule(workouts)
+    }
+
     private func flush() async {
         guard !flushing else { return }
         flushing = true
         defer { flushing = false }
+        while let next = approvals.first {
+            guard await post("api/workouts/approve", next) else { return }
+            approvals.removeFirst()
+            saveOutbox()
+        }
         while let next = outbox.first {
-            var r = URLRequest(url: Auth.server.appending(path: "api/runs"))
-            r.httpMethod = "POST"
-            r.setValue("application/json", forHTTPHeaderField: "Content-Type")
-            r.httpBody = try? JSONEncoder().encode(next)
-            // Offline, signed out or a server error: keep it for the next sync.
-            guard let sent = try? await auth.send(r), sent.1.statusCode < 500 else { return }
-            outbox.removeFirst() // stored, or rejected as invalid (resending would never succeed)
+            guard await post("api/runs", next) else { return }
+            outbox.removeFirst()
             saveOutbox()
         }
     }
 
+    /// False when the server could not take it now (offline, signed out, a server error): it is
+    /// kept for the next sync. True once stored, or rejected as invalid (resending would never succeed).
+    private func post(_ path: String, _ body: some Encodable) async -> Bool {
+        var r = URLRequest(url: Auth.server.appending(path: path))
+        r.httpMethod = "POST"
+        r.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        r.httpBody = try? JSONEncoder().encode(body)
+        guard let sent = try? await auth.send(r), sent.1.statusCode < 500 else { return false }
+        return true
+    }
+
     private func saveOutbox() {
         UserDefaults.standard.set(try? JSONEncoder().encode(outbox), forKey: "outbox")
+        UserDefaults.standard.set(try? JSONEncoder().encode(approvals), forKey: "approvals")
         pendingRuns = outbox.count
     }
 
-    private static func decode(_ data: Data) -> [Workout] {
-        ((try? JSONDecoder().decode([ServerWorkout].self, from: data)) ?? []).map(\.workout)
+    private static func decode(_ data: Data) -> [ServerWorkout] {
+        (try? JSONDecoder().decode([ServerWorkout].self, from: data)) ?? []
     }
 }
 
-/// GET /api/workouts
-private struct ServerWorkout: Decodable {
+/// GET /api/workouts (Codable: the list is cached as it came)
+private struct ServerWorkout: Codable {
     let id: String
     let name: String
     let notes: String?
@@ -105,11 +154,14 @@ private struct ServerWorkout: Decodable {
     let target_pace_sec_per_km: Int?
     let blocks: [Block]?
     let scheduled_for: String?
+    var scheduled_time: String?
+    /// "pending" or "approved" (nil from a server, or a cache, before statuses).
+    var status: String?
     let done: Bool
 
     /// A full workout's part: a strength exercise, or an interval run.
-    struct Block: Decodable {
-        struct Set: Decodable {
+    struct Block: Codable {
+        struct Set: Codable {
             let reps: Int?
             let seconds: Int?
             let weight_kg: Double?
@@ -133,6 +185,8 @@ private struct ServerWorkout: Decodable {
         w.serverId = id
         w.notes = notes
         w.scheduledFor = scheduled_for
+        w.scheduledTime = scheduled_time
+        w.pending = status == "pending"
         w.done = done
         return w
     }
@@ -161,6 +215,12 @@ private struct ServerWorkout: Decodable {
         }
         return out
     }
+}
+
+/// POST /api/workouts/approve: the runner's OK for a workout the coach planned, at a new time if moved.
+struct Approval: Codable {
+    let workout_id: String
+    let scheduled_time: String?
 }
 
 /// POST /api/runs: a run recorded by the phone, optionally with the runner's RPE.
