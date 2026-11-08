@@ -17,6 +17,7 @@ final class Auth: NSObject, ASWebAuthenticationPresentationContextProviding {
     private var accessToken: String?
     private var expiresAt = Date.distantPast
     private var session: ASWebAuthenticationSession? // kept alive while the sheet is up
+    private var refreshing: Task<Void, Error>?
 
     var isSignedIn: Bool { Keychain.read("refresh") != nil }
 
@@ -67,14 +68,23 @@ final class Auth: NSObject, ASWebAuthenticationPresentationContextProviding {
         throw URLError(.userAuthenticationRequired)
     }
 
+    /// One refresh at a time: two requests sent together (the workout list and the device token at
+    /// launch) share it. Refresh tokens rotate, so a second refresh with the same one would be
+    /// refused and sign the phone out.
     private func refresh() async throws {
-        guard let refresh = Keychain.read("refresh") else { throw URLError(.userAuthenticationRequired) }
-        do {
-            try await token(["grant_type": "refresh_token", "refresh_token": refresh, "client_id": try await registeredClient()])
-        } catch let error as URLError where error.code == .userAuthenticationRequired {
-            signOut()
-            throw error
+        if let refreshing { return try await refreshing.value }
+        let task = Task {
+            guard let refresh = Keychain.read("refresh") else { throw URLError(.userAuthenticationRequired) }
+            do {
+                try await token(["grant_type": "refresh_token", "refresh_token": refresh, "client_id": try await registeredClient()])
+            } catch let error as URLError where error.code == .userAuthenticationRequired {
+                signOut()
+                throw error
+            }
         }
+        refreshing = task
+        defer { refreshing = nil }
+        try await task.value
     }
 
     /// Token endpoint. Refresh tokens rotate, so every response's refresh token replaces the last.

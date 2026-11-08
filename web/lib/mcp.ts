@@ -1,5 +1,6 @@
 import { McpServer } from "@modelcontextprotocol/server";
 import * as z from "zod/v4";
+import { notifyCoachChange } from "@/lib/push";
 import {
   addRunFeedback,
   createWorkout,
@@ -82,6 +83,8 @@ export function buildServer(userId: string) {
     },
     async ({ request_id, ...input }) => {
       const { id, created } = await createWorkout(userId, request_id, input, "assistant");
+      // The runner's phone gets one push per coach write (debounced), so they open the app and approve.
+      if (created) await notifyCoachChange(userId, id);
       return json({ workout_id: id, already_existed: !created, verify_with: "get_workout" });
     },
   );
@@ -99,7 +102,13 @@ export function buildServer(userId: string) {
     },
     async ({ workouts }) => {
       const ids = [];
-      for (const { request_id, ...input } of workouts) ids.push((await createWorkout(userId, request_id, input, "assistant")).id);
+      let created = false;
+      for (const { request_id, ...input } of workouts) {
+        const w = await createWorkout(userId, request_id, input, "assistant");
+        ids.push(w.id);
+        created ||= w.created;
+      }
+      if (created) await notifyCoachChange(userId, ids[0]);
       return json({ workout_ids: ids, verify_with: "get_workout" });
     },
   );
@@ -115,6 +124,7 @@ export function buildServer(userId: string) {
     },
     async ({ workout_id, changes }) => {
       const { id, changed } = await updateWorkout(userId, workout_id, changes, "assistant");
+      if (changed.length) await notifyCoachChange(userId, id, "Your plan changed");
       return json({ workout_id: id, changed, verify_with: "get_workout" });
     },
   );

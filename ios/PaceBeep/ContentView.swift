@@ -28,7 +28,9 @@ struct ContentView: View {
         .onAppear {
             runner.onRun = coach.upload
             NextIntent.handler = runner.advance(from:)
-            Reminders.shared.onOpen = { opened = $0 }
+            // A tapped reminder or push: that workout up top; after a push it is new, so fetch it.
+            Reminders.shared.onOpen = { opened = $0; Task { await coach.sync() } }
+            Reminders.shared.onToken = coach.register(deviceToken:)
         }
         .task(id: scenePhase) { if scenePhase == .active { await coach.sync() } }
     }
