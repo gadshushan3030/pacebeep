@@ -49,14 +49,23 @@ final class Coach {
     }
 
     func signOut() {
-        auth.signOut()
         signedIn = false
         server = []
+        // The server forgets this phone before the token that could tell it to goes.
+        Task {
+            if let token = UserDefaults.standard.string(forKey: "deviceTokenSent") {
+                _ = await post("api/devices", Device(token: token), method: "DELETE")
+                UserDefaults.standard.removeObject(forKey: "deviceTokenSent")
+            }
+            auth.signOut()
+        }
     }
 
     /// Sends waiting runs and approvals, then fetches the workout list.
     func sync() async {
         guard auth.isSignedIn else { return }
+        // iOS answers with the device token (each time), which register(deviceToken:) sends if new.
+        Reminders.registerForPush()
         await flush()
         do {
             // blocks=1: full workouts too (an app from before them would fail to decode them).
@@ -97,10 +106,19 @@ final class Coach {
         Task { await flush() }
     }
 
-    /// "Remind me" in the offer: the system prompt, then the reminders (denied: none, quietly).
+    /// "Remind me" in the offer: the system prompt, then the reminders (denied: none, quietly),
+    /// and the device token for the coach's push.
     func enableReminders() async {
         _ = try? await Reminders.center.requestAuthorization(options: [.alert, .sound])
         Reminders.schedule(workouts)
+        Reminders.registerForPush()
+    }
+
+    /// The APNs token iOS gave this launch. Sent to the server once per token (and again after the
+    /// next sign-in): the server pushes to it when the coach plans or changes a workout.
+    func register(deviceToken token: String) {
+        guard auth.isSignedIn, token != UserDefaults.standard.string(forKey: "deviceTokenSent") else { return }
+        Task { if await post("api/devices", Device(token: token)) { UserDefaults.standard.set(token, forKey: "deviceTokenSent") } }
     }
 
     private func flush() async {
@@ -121,9 +139,9 @@ final class Coach {
 
     /// False when the server could not take it now (offline, signed out, a server error): it is
     /// kept for the next sync. True once stored, or rejected as invalid (resending would never succeed).
-    private func post(_ path: String, _ body: some Encodable) async -> Bool {
+    private func post(_ path: String, _ body: some Encodable, method: String = "POST") async -> Bool {
         var r = URLRequest(url: Auth.server.appending(path: path))
-        r.httpMethod = "POST"
+        r.httpMethod = method
         r.setValue("application/json", forHTTPHeaderField: "Content-Type")
         r.httpBody = try? JSONEncoder().encode(body)
         guard let sent = try? await auth.send(r), sent.1.statusCode < 500 else { return false }
@@ -215,6 +233,17 @@ private struct ServerWorkout: Codable {
         }
         return out
     }
+}
+
+/// POST /api/devices: this phone's APNs token. A Debug build is signed for APNs' sandbox.
+struct Device: Codable {
+    let token: String
+    var platform = "ios"
+    #if DEBUG
+    var environment = "sandbox"
+    #else
+    var environment = "production"
+    #endif
 }
 
 /// POST /api/workouts/approve: the runner's OK for a workout the coach planned, at a new time if moved.
