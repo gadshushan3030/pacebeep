@@ -51,10 +51,17 @@ final class Reminders: NSObject, UNUserNotificationCenterDelegate {
         }
     }
 
-    func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse) async {
+    // The completion-handler form, finished on the main actor: UIKit snapshots the window in the
+    // completion and asserts it is on the main thread. The async form ran it on the cooperative
+    // pool, which crashed every tap on a reminder (#17).
+    func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse,
+                                withCompletionHandler completionHandler: @escaping () -> Void) {
         // A reminder is identified by its workout; the server's push carries the workout in its payload.
         let content = response.notification.request.content
         let id = content.userInfo["workout_id"] as? String ?? response.notification.request.identifier
-        await MainActor.run { if let onOpen { onOpen(id) } else { opened = id } }
+        Task { @MainActor in
+            if let onOpen { onOpen(id) } else { opened = id }
+            completionHandler()
+        }
     }
 }
