@@ -11,13 +11,12 @@ Free, ad-free, open-source iOS interval & gym timer: Claude, ChatGPT, Muse, or a
 
 **[Get it on the App Store](https://apps.apple.com/app/pacebeep/id6818211974)** · **[pacebeep.vercel.app](https://pacebeep.vercel.app)** · [Connect your AI coach](#connect-your-ai-coach-via-mcp) · [Contributing](#contributing)
 
-No ads, no subscription, no tracking. MIT. Author: [Gad Soussan](https://x.com/ShushanGad) ([@ShushanGad](https://x.com/ShushanGad)).
+No ads, no subscription, no tracking. MIT. Author: [Gad Shushan](https://x.com/ShushanGad) ([@ShushanGad](https://x.com/ShushanGad)).
 
 <!-- PLACEHOLDER: lock-screen Live Activity GIF/screenshot
-     Add docs/media/lock-screen-live-activity.gif (see docs/media/README.md), then replace this block with:
+     Add docs/media/lock-screen-live-activity.gif (see docs/media/README.md), then replace this comment with:
      ![Live Activity on the lock screen: work (orange) and rest (blue)](docs/media/lock-screen-live-activity.gif)
 -->
-> **Media placeholder:** lock-screen / Dynamic Island recording goes in [`docs/media/lock-screen-live-activity.gif`](docs/media/README.md). Until then, see the stills below.
 
 ![The iPhone app: today's workout from the coach, a work interval, a rest interval, and the summary with the RPE that goes back to the coach](docs/screenshots/app.png)
 
@@ -53,11 +52,21 @@ Self-hosted: use `https://<your-app>/mcp` instead (see [Deploy your own](#deploy
 3. Sign in to PaceBeep, check the app name and return address, **Allow**.
 4. In ChatGPT’s **Work** tab, type `@` and pick the app.
 
-### Claude / Claude Desktop / Cursor / other MCP clients
+### Claude (claude.ai / Desktop)
 
-Point a remote MCP client at the same URL. OAuth is negotiated by the client (dynamic client registration + PKCE); you approve on PaceBeep’s consent page.
+**Settings → Connectors → Add custom connector** → URL `https://pacebeep.vercel.app/mcp`. Sign in and **Allow** when PaceBeep’s consent page opens.
 
-Example Cursor / Claude-style `mcpServers` entry (URL-only remote server):
+### Claude Code
+
+```bash
+claude mcp add --transport http pacebeep https://pacebeep.vercel.app/mcp
+```
+
+(Or a `.mcp.json` entry with `"type": "http"` and that URL — a bare `"url"` alone is treated as stdio and fails.)
+
+### Cursor
+
+Add a remote server in MCP settings, or:
 
 ```json
 {
@@ -69,7 +78,7 @@ Example Cursor / Claude-style `mcpServers` entry (URL-only remote server):
 }
 ```
 
-Exact key names vary by client; the important part is the URL above and OAuth support. After you allow access, try: *“Use PaceBeep: get my summary, then plan three interval sessions this week.”*
+After you allow access, try: *“Use PaceBeep: get my summary, then plan three interval sessions this week.”*
 
 Registry metadata for the same remote server lives in [`server.json`](server.json).
 
@@ -108,7 +117,7 @@ ChatGPT / Claude / MCP client ──►  Next.js on Vercel
                                    Postgres (Neon), every row scoped by user_id
 ```
 
-More detail: [docs/AGENT_BRIEF.md](docs/AGENT_BRIEF.md). Auth + MCP alone as a template: **[MCP OAuth Starter](https://github.com/gadshushan3030/mcp-oauth-starter)**.
+More detail: [docs/AGENT_BRIEF.md](docs/AGENT_BRIEF.md). For MCP builders: [OAuth sequence](docs/oauth-flow.svg), [what Disconnect deletes](docs/disconnect.svg), [idempotent retries](docs/retries.svg). Auth + MCP alone as a template: **[MCP OAuth Starter](https://github.com/gadshushan3030/mcp-oauth-starter)**.
 
 ### Screens
 
@@ -122,7 +131,7 @@ On the web: the week your coach planned, what you ran and how it felt, and which
 
 ### Accounts, reminders, data
 
-- **Accounts**: Continue with Apple / Google (when configured) or email + password (Better Auth). Set `SIGNUP_ENABLED=false` to close registration. New accounts get three starter workouts.
+- **Accounts**: Continue with Apple / Google (when configured) or email + password (Better Auth). With Apple or Google on, new accounts come only from them (their emails are verified, so nobody can pre-register a password account on someone else's email); password sign-in keeps working for existing accounts. Set `SIGNUP_ENABLED=false` to close registration entirely. New accounts get three starter workouts.
 - **Agents**: dynamic client registration → you approve on `/oauth/consent` → access token bound to `<BETTER_AUTH_URL>/mcp`. **Disconnect** on the dashboard deletes that user’s consent and tokens immediately.
 - **Reminders**: coach creates/changes a workout → `pending` → optional APNs push → you approve in the app → local notification at the scheduled time.
 - **Data**: `workouts` (plans), `runs` (what happened), `run_feedback` (RPE/notes). Writes carry a `request_id` so retries never duplicate.
@@ -164,7 +173,9 @@ Requires Xcode 26 and an Apple ID (a free one works; the app then expires after 
 3. Connect the iPhone, turn on Settings → Privacy & Security → Developer Mode, open `ios/PaceBeep.xcodeproj` and Run.
 4. First launch: trust the developer in Settings → General → VPN & Device Management.
 
-The App Store / default build talks to `https://pacebeep.vercel.app` (`SERVER_URL` in `ios/Config.xcconfig`). Sign in once, ask your assistant to plan your week, and workouts show up under **From your coach**; pull to refresh. Workouts are cached and finished runs wait in an outbox, so a gym without signal is fine.
+Every build defaults to `https://pacebeep.vercel.app` (`SERVER_URL` in `ios/Config.xcconfig`), not only the App Store build — so a local Run without an override writes to the live server. To use your own backend, set `SERVER_URL` in `Local.xcconfig` (`http:/$()/localhost:3200` in the simulator, or your Mac’s LAN address on a physical device, with the same address as `BETTER_AUTH_URL` in `web/.env.local`).
+
+Sign in once, ask your assistant to plan your week, and workouts show up under **From your coach**; pull to refresh. Workouts are cached and finished runs wait in an outbox, so a gym without signal is fine.
 
 The whole workout is rendered into one audio track (silence with beeps at exact times) and played with the background audio mode, so iOS keeps the app alive with the screen locked. After a run the app shows whether the audio played without gaps. Full (gym) workouts wait for **Done** / **Ready** / **Skip** — including on the Live Activity — so the phone can stay locked.
 
@@ -173,18 +184,20 @@ The whole workout is rendered into one audio track (silence with beeps at exact 
 1. Import the repo in Vercel with **Root Directory = `web`**.
 2. **Storage → Create Database → Neon (Free)**, connect it with env prefix `DATABASE` (gives `DATABASE_URL`).
 3. Environment variables: `BETTER_AUTH_SECRET` (`openssl rand -hex 32`), `BETTER_AUTH_URL` (your production URL), optionally `SIGNUP_ENABLED`.
-4. Optional Google / Apple sign-in and APNs: see `web/.env.example` and the comments there for redirect URIs and key setup.
-5. Deploy. The build (`vercel-build`) applies `web/db/migrations/*.sql` before `next build`. Only `main` deploys (`web/vercel.json`).
+4. Optional Google / Apple sign-in and APNs: see `web/.env.example` and the comments there for redirect URIs and key setup. Google: while the OAuth consent screen is in "Testing", only listed test users can sign in; to open it, fill the Branding page (home page, `/privacy`, `/terms`) and click **Publish app**.
+5. Deploy. The build (`vercel-build`) applies `web/db/migrations/*.sql` before `next build`. Only `main` deploys (`web/vercel.json` turns off deployments for other branches): the environment variables are production-only, and giving previews the production `DATABASE_URL` would let any branch migrate the production database.
 
 ## Security notes
 
 - No secrets in the repo: `.env*` is ignored; only `.env.example` is committed.
-- Assistants never get a long-lived key — only short-lived access tokens after you approve.
+- Assistants never get a key – only a short-lived access token (1 hour) and a refresh token, after you approve. **Disconnect** revokes both.
 - Every query and write is scoped to the signed-in user; cross-user access returns “not found”.
 - Users can delete their account (Account page); data and assistant connections go with it.
-- Public pages: `/privacy` and `/terms`.
+- Public pages: `/privacy` and `/terms` (review them for your own deployment – they name the operator and contact).
 
-**Disconnect** is per user: it deletes that user’s consent, refresh tokens and access tokens, never the shared client registration.
+**Disconnect** is per user: it deletes that user’s consent, refresh tokens and access tokens, never the shared client registration. See [docs/disconnect.svg](docs/disconnect.svg).
+
+**Retries** are safe: a lost response followed by a retry with the same `request_id` returns the same run. See [docs/retries.svg](docs/retries.svg).
 
 ## Roadmap
 

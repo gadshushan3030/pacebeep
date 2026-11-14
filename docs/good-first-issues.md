@@ -56,11 +56,11 @@ Small, real tasks spotted in the current codebase. Each one should fit a first-t
 
 **Why:** `ios/Config.xcconfig` mentions overriding `SERVER_URL` for local backends, but `Local.xcconfig.example` only shows team / bundle id. New iOS contributors guessing the override often point the app at production by mistake.
 
-**Files:** `ios/Local.xcconfig.example`, optionally a one-line pointer in `README.md` / `CONTRIBUTING.md`
+**Files:** `ios/Local.xcconfig.example`, and align the port comment in `ios/Config.xcconfig` if it still disagrees
 
 **Acceptance:**
-- Example file shows a commented `SERVER_URL = http:/$()/localhost:3200` (or whatever syntax matches xcconfig `//` escaping already used in `Config.xcconfig`).
-- A short comment explains when to set it and that App Transport Security / cleartext may need a Debug exception for `http://`.
+- Example file shows a commented `SERVER_URL = http:/$()/localhost:3200` (same `$()` escaping as in `Config.xcconfig`), and the `Config.xcconfig` comment uses the same port (3200, matching the web setup).
+- A short comment explains when to set it. `ios/Info.plist` already allows local networking (`NSAllowsLocalNetworking`), so no ATS exception should be added.
 
 ---
 
@@ -93,19 +93,20 @@ Small, real tasks spotted in the current codebase. Each one should fit a first-t
 
 ---
 
-## 7. MCP `delete_workout` tool wrapping existing `deleteWorkout`
+## 7. MCP `delete_workout` tool (safe wrapper; MCP-only slice of #33)
 
-**Labels:** `good first issue`, `enhancement` (related to #33, but scoped to MCP only)
+**Labels:** `good first issue`, `enhancement` (related to #33, MCP only — no iOS archive UI)
 
-**Why:** The web UI already deletes via `removeWorkout` → `deleteWorkout` in `web/lib/workouts.ts`, but the MCP server has no delete tool. Coaches resort to moving mistaken workouts to yesterday (see issue #33).
+**Why:** The web UI deletes via `removeWorkout` → `deleteWorkout` in `web/lib/workouts.ts`, but the MCP server has no delete tool. Coaches resort to moving mistaken workouts to yesterday (see issue #33). The existing `deleteWorkout` helper is too bare to expose as-is.
 
-**Files:** `web/lib/mcp.ts`, `web/test/mcp.test.mts`, README MCP tools table
+**Files:** `web/lib/mcp.ts`, `web/lib/workouts.ts` (strengthen delete helper or add a dedicated one), `web/test/mcp.test.mts`, README MCP tools table
 
 **Acceptance:**
-- New tool `delete_workout` (`workout_id`) calls `deleteWorkout` scoped to the token’s user.
-- Missing / other-user ids behave like other tools (“not found”).
-- README tools table + a test assertion updated.
-- Does **not** need to implement iOS archive UI (that stays with #33).
+- New tool `delete_workout` (`workout_id`) for the token’s user.
+- Missing / other-user ids return “not found” (use `assertOwned` or equivalent — do not wrap the bare `delete …` that reports success when zero rows match).
+- Refuse workouts that already have a linked run (issue #33: only scheduled / not-yet-started plans; `runs.workout_id` is `on delete set null`).
+- Use a separate tool annotation with `destructiveHint: true` (do not reuse the shared `WRITE` constant that sets `destructiveHint: false`).
+- README tools table + tests updated. iOS archive UI stays with #33.
 
 ---
 
@@ -143,11 +144,11 @@ Small, real tasks spotted in the current codebase. Each one should fit a first-t
 
 **Labels:** `good first issue`, `enhancement`
 
-**Why:** `/oauth/consent` lists permissions and redirect URIs, but never shows `https://pacebeep.vercel.app/mcp` (or the current origin’s `/mcp`). New users approving ChatGPT / Claude cannot verify what they are connecting.
+**Why:** `/oauth/consent` lists permissions and redirect URIs, but never shows the MCP resource URL. New users approving ChatGPT / Claude cannot verify what they are connecting.
 
-**Files:** `web/app/oauth/consent/page.tsx`
+**Files:** `web/app/oauth/consent/page.tsx`, `web/lib/auth.ts` (`MCP_RESOURCE`)
 
 **Acceptance:**
-- Show the MCP resource URL derived from the request origin (or `BETTER_AUTH_URL`) as `/mcp`.
+- Show the MCP resource URL the token is bound to: `MCP_RESOURCE` from `web/lib/auth.ts` (`<BETTER_AUTH_URL>/mcp`), not a value derived from the request origin (aliases / custom domains would otherwise disagree with the token audience).
 - Keep the existing allow/deny flow untouched.
-- Works for self-hosted deploys (no hardcoded production host required if origin is used).
+- Works for self-hosted deploys because `BETTER_AUTH_URL` is already the deploy’s public base.

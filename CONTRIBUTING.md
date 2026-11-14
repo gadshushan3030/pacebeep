@@ -16,33 +16,12 @@ Everyone is expected to follow the [Contributor Covenant](CODE_OF_CONDUCT.md). B
 
 ## Setting up
 
-### Web (Next.js + Postgres)
-
-Requires Node 22+ and Docker. Details in the README: [Run locally (web)](README.md#run-locally-web).
-
-```bash
-cd web
-npm install
-npm run db:up
-cp .env.example .env.local   # fill BETTER_AUTH_SECRET (openssl rand -hex 32)
-npm run db:migrate
-npm run dev -- -p 3200
-```
-
-Open http://localhost:3200 and create an account.
-
-### iOS (SwiftUI)
-
-Requires Xcode 26 and an Apple ID (a free one works; the build expires after 7 days). Details: [Run on your iPhone](README.md#run-on-your-iphone-ios).
-
-1. Copy `ios/Local.xcconfig.example` → `ios/Local.xcconfig` and set your team id and bundle id.
-2. Open `ios/PaceBeep.xcodeproj`, connect a device (Developer Mode on), Run.
-3. The App Store build talks to `https://pacebeep.vercel.app`. To hit a local server, set `SERVER_URL` in `Local.xcconfig` (see comments in `ios/Config.xcconfig`).
-
-### Architecture
-
-- [docs/AGENT_BRIEF.md](docs/AGENT_BRIEF.md) — architecture and conventions (written for humans and coding agents).
-- [design/README.md](design/README.md) — color and type tokens.
+- **Web:** [Run locally (web)](README.md#run-locally-web) — Node 22+, Docker, port 3200.
+- **iOS:** [Run on your iPhone](README.md#run-on-your-iphone-ios) — Xcode 26, a free Apple ID is enough.
+  1. Copy `ios/Local.xcconfig.example` → `ios/Local.xcconfig` and set your team id and bundle id.
+  2. Open `ios/PaceBeep.xcodeproj`, connect a device (Developer Mode on), Run.
+  3. Every build, not only the App Store one, talks to `https://pacebeep.vercel.app` by default (`SERVER_URL` in `ios/Config.xcconfig`). To use your local server instead, set `SERVER_URL` in `Local.xcconfig`: `http:/$()/localhost:3200` in the simulator, or your Mac's LAN address on a physical iPhone (and the same address as `BETTER_AUTH_URL` in `web/.env.local`).
+- **Architecture:** [docs/AGENT_BRIEF.md](docs/AGENT_BRIEF.md) (humans and coding agents). Tokens: [design/README.md](design/README.md).
 
 ## Pull requests
 
