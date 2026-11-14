@@ -1,0 +1,41 @@
+name: Feature
+description: Something PaceBeep should do
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        One feature per issue. If you want a small, scoped starter task, see [docs/good-first-issues.md](https://github.com/gadshushan3030/pacebeep/blob/main/docs/good-first-issues.md).
+  - type: textarea
+    id: problem
+    attributes:
+      label: The problem
+      description: What you wanted to do and could not.
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: How you imagine it
+      description: A short sketch of the behavior. Wireframes welcome but not required.
+    validations:
+      required: true
+  - type: dropdown
+    id: where
+    attributes:
+      label: Where
+      options:
+        - iPhone app
+        - Web dashboard
+        - MCP tools (for your AI coach)
+        - Docs / onboarding
+        - Not sure
+    validations:
+      required: true
+  - type: checkboxes
+    id: first
+    attributes:
+      label: Good first issue?
+      options:
+        - label: This looks small enough for a first-time contributor (scope fits in one PR)

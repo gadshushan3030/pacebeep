@@ -1,0 +1,19 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.gadshushan3030/pacebeep",
+  "title": "PaceBeep",
+  "description": "AI coach writes interval workouts to PaceBeep; your iPhone runs them with lock-screen beeps.",
+  "websiteUrl": "https://pacebeep.vercel.app",
+  "repository": {
+    "url": "https://github.com/gadshushan3030/pacebeep",
+    "source": "github",
+    "subfolder": "web"
+  },
+  "version": "0.1.0",
+  "remotes": [
+    {
+      "type": "streamable-http",
+      "url": "https://pacebeep.vercel.app/mcp"
+    }
+  ]
+}

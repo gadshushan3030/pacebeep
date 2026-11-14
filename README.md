@@ -1,48 +1,101 @@
 # PaceBeep
 
-Interval running with an AI coach. Your assistant (ChatGPT, Claude or any MCP client) plans the intervals over OAuth; the iPhone app plays them with beeps that keep going with the screen locked, and sends each run back.
+**Your AI coach writes the workout. Your iPhone beeps it on the lock screen.**
 
-[![Download on the App Store](https://img.shields.io/badge/App_Store-Download-black?logo=apple)](https://apps.apple.com/app/pacebeep/id6818211974)
+Free, ad-free, open-source iOS interval & gym timer: Claude, ChatGPT, Muse, or any MCP client plans sessions over OAuth; the SwiftUI app runs them as a Live Activity (lock screen / Dynamic Island) with beeps and Done/Skip; you rate difficulty and the coach sees it.
+
+[![Download on the App Store](https://tools.applemediaservices.com/api/badges/download-on-the-app-store/black/en-us?size=250x83)](https://apps.apple.com/app/pacebeep/id6818211974)
+
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![GitHub stars](https://img.shields.io/github/stars/gadshushan3030/pacebeep?style=social)](https://github.com/gadshushan3030/pacebeep/stargazers)
 
-**[Get it on the App Store](https://apps.apple.com/app/pacebeep/id6818211974)** · **[pacebeep.vercel.app](https://pacebeep.vercel.app)** · [Connect ChatGPT](#connect-chatgpt) · [Run your own](#deploy-your-own-vercel--neon)
+**[Get it on the App Store](https://apps.apple.com/app/pacebeep/id6818211974)** · **[pacebeep.vercel.app](https://pacebeep.vercel.app)** · [Connect your AI coach](#connect-your-ai-coach-via-mcp) · [Contributing](#contributing)
 
-Free, open source (MIT), no ads, no subscription, no tracking. The live site is open: sign in with Apple or Google.
+No ads, no subscription, no tracking. MIT. Author: [Gad Shushan](https://x.com/ShushanGad) ([@ShushanGad](https://x.com/ShushanGad)).
+
+<!-- PLACEHOLDER: lock-screen Live Activity GIF/screenshot
+     Add docs/media/lock-screen-live-activity.gif (see docs/media/README.md), then replace this comment with:
+     ![Live Activity on the lock screen: work (orange) and rest (blue)](docs/media/lock-screen-live-activity.gif)
+-->
 
 ![The iPhone app: today's workout from the coach, a work interval, a rest interval, and the summary with the RPE that goes back to the coach](docs/screenshots/app.png)
 
-- **web/** – Next.js 16 backend and dashboard: accounts, workouts, runs, and an MCP server at `/mcp`.
-- **ios/** – SwiftUI app: plays the workouts your assistant planned as timed intervals with beeps that keep going with the screen locked, shows a Live Activity (lock screen and Dynamic Island), and sends each run and your RPE back.
-- **design/** – the design: canvas source for every screen, plus the color and type tokens and where they live in code.
-- **docs/AGENT_BRIEF.md** – architecture and the brief for coding agents working on this repo.
-
-The auth + MCP layer is also available on its own as a clean template: **[MCP OAuth Starter](https://github.com/gadshushan3030/mcp-oauth-starter)**. Single-owner sibling project: [English Coach](https://github.com/gadshushan3030/english-coach-mcp).
-
-## Screens
-
-With the screen locked, the run stays on the lock screen as a Live Activity, and in the Dynamic Island while you use other apps: orange to run, blue to rest.
-
-![Live Activity on the lock screen while running and while resting](docs/screenshots/live-activity.png)
-
-On the web, the week your coach planned, what you ran and how it felt, and which apps can see your data.
-
-![Web dashboard: the week as seven days with done workouts and their RPE, totals, recent runs, connected apps](docs/screenshots/dashboard.png)
-
 ## How it works
+
+1. **Coach** — You ask Claude, ChatGPT, Muse, or any MCP client to plan your week.
+2. **MCP** — The assistant connects to PaceBeep’s hosted MCP server over OAuth and writes workouts into *your* account.
+3. **Phone** — The iPhone app pulls those workouts, plays them with beeps that survive the lock screen, shows a Live Activity, and sends the run + your RPE back to the coach.
 
 ![Architecture: runners and AI coaches, two doors into one Next.js app over Postgres](docs/architecture.svg)
 
-- **Accounts**: "Continue with Apple" (when the four `APPLE_*` variables are set), "Continue with Google" (when `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET` are set) or email + password (Better Auth). With Apple or Google on, new accounts come only from them, whose emails are verified, so nobody can pre-register a password account on someone else's email; password sign-in keeps working for existing accounts. Set `SIGNUP_ENABLED=false` to close registration entirely. Every new account starts with three workouts, so the app has something to play before an assistant is connected.
-- **Agents**: an assistant registers itself (dynamic client registration), the user signs in and approves it on `/oauth/consent`, and gets an access token bound to `<BETTER_AUTH_URL>/mcp`. `/mcp` also checks on every request that the user's approval still exists, so **Disconnect** on the dashboard cuts access at once (for that user only).
-- **Reminders**: a workout the coach creates or changes over MCP is `pending`; the server sends the runner's phones one visible push ("New workout from your coach. Open to approve."), at most one per 10 minutes, straight to APNs with the team's `.p8` key (no third party, no cron). Tapping it opens that workout; approving it schedules a *local* notification for its time. The push carries the change, the phone keeps the time. Without the `APNS_*` variables everything else works, just without the push.
-- **Data**: `workouts` (plans: an interval run, or a full workout whose `blocks` list strength exercises and runs in the order the coach chose), `runs` (what happened: `device` = recorded by the phone, `manual` = entered/reported) and `run_feedback` (RPE and notes – self-reported, kept apart from measurements). Every write carries a `request_id`; replaying it returns the same row and never duplicates.
+Every new account starts with three starter workouts, so you can try the beeps before an assistant is connected.
 
-![Data model: workouts (the plan), runs (what happened), run_feedback (how it felt)](docs/data-model.svg)
+## Connect your AI coach via MCP
 
-### How an assistant connects
+Production MCP endpoint (OAuth, Streamable HTTP):
 
-![Sequence: discover, register, authorize with PKCE, token, tool calls](docs/oauth-flow.svg)
+```text
+https://pacebeep.vercel.app/mcp
+```
+
+That URL is the app’s MCP resource (`BETTER_AUTH_URL` + `/mcp`). Discovery and auth metadata are live:
+
+- Protected resource: `https://pacebeep.vercel.app/.well-known/oauth-protected-resource/mcp`
+- Authorization server: `https://pacebeep.vercel.app/api/auth` (RFC 8414 via `/.well-known/oauth-authorization-server/api/auth`)
+
+Self-hosted: use `https://<your-app>/mcp` instead (see [Deploy your own](#deploy-your-own-vercel--neon)).
+
+### ChatGPT
+
+1. ChatGPT → Settings → Security and login → **Developer mode**.
+2. [chatgpt.com/plugins](https://chatgpt.com/plugins) → **Add** → Create MCP App → URL `https://pacebeep.vercel.app/mcp`, authentication **OAuth**.
+3. Sign in to PaceBeep, check the app name and return address, **Allow**.
+4. In ChatGPT’s **Work** tab, type `@` and pick the app.
+
+### Claude (claude.ai / Desktop)
+
+**Customize → Connectors → Add → Custom → Web** (wording varies slightly by plan) → URL `https://pacebeep.vercel.app/mcp`. Choose sign-in when prompted; complete OAuth on PaceBeep’s consent page. Remote connectors are reached from Anthropic’s cloud, so this URL must be publicly reachable (the hosted endpoint is).
+
+### Claude Code
+
+Verified against [Claude Code MCP docs](https://code.claude.com/docs/en/mcp): a `url` with no `type` is treated as stdio and skipped.
+
+```bash
+claude mcp add --transport http pacebeep https://pacebeep.vercel.app/mcp
+```
+
+Or in `.mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "pacebeep": {
+      "type": "http",
+      "url": "https://pacebeep.vercel.app/mcp"
+    }
+  }
+}
+```
+
+(`"streamable-http"` is accepted as an alias for `"http"`.)
+
+### Cursor
+
+Add a remote server in MCP settings, or:
+
+```json
+{
+  "mcpServers": {
+    "pacebeep": {
+      "url": "https://pacebeep.vercel.app/mcp"
+    }
+  }
+}
+```
+
+After you allow access, try: *“Use PaceBeep: get my summary, then plan three interval sessions this week.”*
+
+Registry metadata for the same remote server lives in [`server.json`](server.json).
 
 ### MCP tools
 
@@ -56,16 +109,60 @@ On the web, the week your coach planned, what you ran and how it felt, and which
 | `record_run` | Store a run (`manual` when the runner reports it in chat) |
 | `add_run_feedback` | RPE 1–10 and notes for a run |
 
-### The iPhone app's API
+## Architecture overview
 
-The app is one more OAuth client of the same server: it registers itself as a native client (redirect `app.vercel.pacebeep:/oauth/callback`, PKCE, no secret), the user approves it like an assistant, and it calls two routes with the same kind of token:
+| Path | Role |
+|---|---|
+| **web/** | Next.js 16 backend + dashboard on Vercel: accounts, workouts, runs, OAuth, MCP at `/mcp` |
+| **ios/** | SwiftUI app: timed intervals with background-audio beeps, Live Activity, offline outbox, RPE |
+| **design/** | Canvas source, color and type tokens |
+| **docs/** | Architecture brief, launch notes, screenshots, [good first issues](docs/good-first-issues.md) |
+
+```
+iPhone (SwiftUI) ──── OAuth 2.1 + PKCE ───┐
+                                          ▼
+ChatGPT / Claude / MCP client ──►  Next.js on Vercel
+                                   ├─ /api/auth/*     Better Auth + OAuth 2.1
+                                   ├─ /.well-known/*  discovery
+                                   ├─ /oauth/consent  you approve each coach
+                                   ├─ /api/*          REST for the iPhone app
+                                   └─ /mcp            MCP (token aud = /mcp)
+                                            │
+                                            ▼
+                                   Postgres (Neon), every row scoped by user_id
+```
+
+More detail: [docs/AGENT_BRIEF.md](docs/AGENT_BRIEF.md). For MCP builders: [OAuth sequence](docs/oauth-flow.svg), [what Disconnect deletes](docs/disconnect.svg), [idempotent retries](docs/retries.svg). Auth + MCP alone as a template: **[MCP OAuth Starter](https://github.com/gadshushan3030/mcp-oauth-starter)**.
+
+### Screens
+
+With the screen locked, the run stays on the lock screen as a Live Activity, and in the Dynamic Island while you use other apps: orange to run, blue to rest.
+
+![Live Activity on the lock screen while running and while resting](docs/screenshots/live-activity.png)
+
+On the web: the week your coach planned, what you ran and how it felt, and which apps can see your data.
+
+![Web dashboard: the week as seven days with done workouts and their RPE, totals, recent runs, connected apps](docs/screenshots/dashboard.png)
+
+### Accounts, reminders, data
+
+- **Accounts**: Continue with Apple / Google (when configured) or email + password (Better Auth). With Apple or Google on, new accounts come only from them (their emails are verified, so nobody can pre-register a password account on someone else's email); password sign-in keeps working for existing accounts. Set `SIGNUP_ENABLED=false` to close registration entirely. New accounts get three starter workouts.
+- **Agents**: dynamic client registration → you approve on `/oauth/consent` → access token bound to `<BETTER_AUTH_URL>/mcp`. **Disconnect** on the dashboard deletes that user’s consent and tokens immediately.
+- **Reminders**: coach creates/changes a workout → `pending` → optional APNs push → you approve in the app → local notification at the scheduled time.
+- **Data**: `workouts` (plans), `runs` (what happened), `run_feedback` (RPE/notes). Writes carry a `request_id` so retries never duplicate.
+
+![Data model: workouts (the plan), runs (what happened), run_feedback (how it felt)](docs/data-model.svg)
+
+### The iPhone app’s API
+
+The app is another OAuth client of the same server (redirect `app.vercel.pacebeep:/oauth/callback`, PKCE, no secret):
 
 | Route | What it does |
 |---|---|
-| `GET /api/workouts` | Workouts scheduled for today or later, then unscheduled ones; `done` once a run was recorded for it. Full workouts (`blocks`) only with `?blocks=1`, so app versions from before them keep working |
-| `POST /api/runs` | `{ request_id, run, feedback? }`: stores the run as `device`, plus the RPE. Idempotent, so the app's offline outbox resends until it gets a 2xx |
-| `POST /api/workouts/approve` | `{ workout_id, scheduled_time? }`: the runner's OK for a workout the coach planned, optionally moved to another time of day |
-| `POST /api/devices` | `{ token, platform: "ios", environment }`: the phone's APNs token, sent once per token on launch, so the server can push when the coach plans something. `DELETE` with `{ token }` on sign-out |
+| `GET /api/workouts` | Upcoming / unscheduled workouts (`?blocks=1` for full gym workouts) |
+| `POST /api/runs` | `{ request_id, run, feedback? }` — device run + optional RPE; idempotent |
+| `POST /api/workouts/approve` | Runner OK for a coach-planned workout |
+| `POST /api/devices` | APNs token registration (`DELETE` on sign-out) |
 
 ## Run locally (web)
 
@@ -80,64 +177,58 @@ npm run db:migrate
 npm run dev -- -p 3200
 ```
 
-Open http://localhost:3200 and create an account.
+Open http://localhost:3200 and create an account. Local MCP URL: `http://localhost:3200/mcp`.
 
 ## Run on your iPhone (ios)
 
 Requires Xcode 26 and an Apple ID (a free one works; the app then expires after 7 days).
 
 1. Xcode → Settings → Accounts → add your Apple ID.
-2. The project's team and bundle id are in `ios/Config.xcconfig`. Building your own copy: `cp ios/Local.xcconfig.example ios/Local.xcconfig` and set your team id and a bundle id of your own there.
+2. The project’s team and bundle id are in `ios/Config.xcconfig`. Building your own copy: `cp ios/Local.xcconfig.example ios/Local.xcconfig` and set your team id and a bundle id of your own there.
 3. Connect the iPhone, turn on Settings → Privacy & Security → Developer Mode, open `ios/PaceBeep.xcodeproj` and Run.
 4. First launch: trust the developer in Settings → General → VPN & Device Management.
 
-The app talks to `https://pacebeep.vercel.app` (`SERVER_URL` in `ios/Config.xcconfig`). Sign in once, ask your assistant to plan your week, and the workouts show up under **From your coach**; pull to refresh. Workouts are cached and finished runs wait in an outbox, so a gym without signal is fine.
+Every build defaults to `https://pacebeep.vercel.app` (`SERVER_URL` in `ios/Config.xcconfig`), not only the App Store build — so a local Run without an override writes to the live server. To use your own backend, set `SERVER_URL` in `Local.xcconfig`: `http:/$()/localhost:3200` in the simulator, or your Mac’s LAN address on a physical device. On a device that LAN address must also be `BETTER_AUTH_URL` in `web/.env.local`: the app requests tokens with `resource = <SERVER_URL>/mcp` (`ios/PaceBeep/Auth.swift`), and the server checks JWT `aud` against `MCP_RESOURCE` (`${BETTER_AUTH_URL}/mcp` in `web/lib/auth.ts` / `web/lib/bearer.ts`). If those disagree, sign-in fails.
 
-The whole workout is rendered into one audio track (silence with the beeps at their exact times) and played with the background audio mode, so iOS keeps the app alive with the screen locked and the beeps can't drift. After a run the app shows whether the audio played without gaps and how late the voice cues were.
+Sign in once, ask your assistant to plan your week, and workouts show up under **From your coach**; pull to refresh. Workouts are cached and finished runs wait in an outbox, so a gym without signal is fine.
 
-A full workout (gym) plays the same way up to each part that waits for a tap: a set done by reps waits for **Done**, and a run after strength waits for **Ready** (getting on the treadmill). The tap renders and plays the next stretch (the rest, with its beeps); a silent loop keeps the app alive in between. Done, Skip (a rest before a set) and Ready are also buttons on the Live Activity, so the phone can stay locked; reps and weight are the plan unless changed with − and + in the app.
+The whole workout is rendered into one audio track (silence with beeps at exact times) and played with the background audio mode, so iOS keeps the app alive with the screen locked. After a run the app shows whether the audio played without gaps. Full (gym) workouts wait for **Done** / **Ready** / **Skip** — including on the Live Activity — so the phone can stay locked.
 
 ## Deploy your own (Vercel + Neon)
 
 1. Import the repo in Vercel with **Root Directory = `web`**.
-2. **Storage → Create Database → Neon (Free)**, connect it to the project with env prefix `DATABASE` (gives `DATABASE_URL`).
+2. **Storage → Create Database → Neon (Free)**, connect it with env prefix `DATABASE` (gives `DATABASE_URL`).
 3. Environment variables: `BETTER_AUTH_SECRET` (`openssl rand -hex 32`), `BETTER_AUTH_URL` (your production URL), optionally `SIGNUP_ENABLED`.
-4. Optional Google sign-in: in Google Cloud create a project, configure the Google Auth Platform (External), and a **Web application** OAuth client with redirect URI `https://<your-app>/api/auth/callback/google`; set `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`. While the app is in "Testing", only listed test users can sign in; to publish, fill the Branding page (home page, `/privacy`, `/terms`) and click **Publish app** – with only the basic `openid email profile` scopes and no logo, no Google verification is needed.
-5. Optional Sign in with Apple (the App Store asks for it next to Google; needs the paid Apple Developer Program): in Certificates, IDs & Profiles create a **Services ID** with Sign in with Apple enabled, domain `<your-app>` and return URL `https://<your-app>/api/auth/callback/apple`, and a **Key** with Sign in with Apple. Set `APPLE_CLIENT_ID` (the Services ID), `APPLE_TEAM_ID`, `APPLE_KEY_ID` and `APPLE_PRIVATE_KEY` (the whole `.p8` file). The server signs Apple's client secret itself on every cold start, so there is no 6-month secret to renew.
-6. Optional push when the coach plans a workout (needs the paid Apple Developer Program): Certificates, IDs & Profiles → **Keys** → **+**, tick **Apple Push Notifications service (APNs)**, download the `.p8` (once; keep it). Set `APNS_KEY` (the whole file), `APNS_KEY_ID` (shown next to the key), `APNS_TEAM_ID` (Membership details) and `APNS_BUNDLE_ID` (the app's, `APP_BUNDLE_ID` in `ios/Config.xcconfig`). One key serves both APNs environments; the server picks the sandbox or production host from what each phone registered.
-7. Deploy. The build (`vercel-build`) applies `web/db/migrations/*.sql` before `next build`. Only `main` deploys (`web/vercel.json` turns off deployments for other branches): the environment variables are production-only, and giving previews the production `DATABASE_URL` would let any branch migrate the production database.
-
-## Connect ChatGPT
-
-1. ChatGPT → Settings → Security and login → **Developer mode**.
-2. [chatgpt.com/plugins](https://chatgpt.com/plugins) → **Add** → Create MCP App → URL `https://<your-app>/mcp`, authentication **OAuth**.
-3. Sign in to PaceBeep in the window that opens, check the app name and return address, and **Allow**.
-4. In ChatGPT's **Work** tab, type `@` and pick the app.
+4. Optional Google / Apple sign-in and APNs: see `web/.env.example` and the comments there for redirect URIs and key setup.
+5. Deploy. The build (`vercel-build`) applies `web/db/migrations/*.sql` before `next build`. Only `main` deploys (`web/vercel.json`).
 
 ## Security notes
 
 - No secrets in the repo: `.env*` is ignored; only `.env.example` is committed.
-- Assistants never get a key – only a short-lived access token (1 hour) and a refresh token, after the user approves.
-- Every query and write is scoped to the signed-in user (or the user behind the token); cross-user access returns "not found".
-- Users can delete their account (Account page); all their data and assistant connections are removed with it.
+- Assistants never get a key – only a short-lived access token (1 hour) and a refresh token, after you approve. **Disconnect** revokes both.
+- Every query and write is scoped to the signed-in user; cross-user access returns “not found”.
+- Users can delete their account (Account page); data and assistant connections go with it.
 - Public pages: `/privacy` and `/terms` (review them for your own deployment – they name the operator and contact).
 
-**Disconnect** is per user: it deletes that user's consent, refresh tokens and access tokens in one transaction, and never the shared client registration.
+**Disconnect** is per user: it deletes that user’s consent, refresh tokens and access tokens, never the shared client registration. See [docs/disconnect.svg](docs/disconnect.svg).
 
-![Timelines and tables: what Disconnect deletes and why the next call gets 401](docs/disconnect.svg)
-
-**Retries** are safe: a lost response followed by a retry with the same `request_id` returns the same run.
-
-![Sequence: a lost response, a retry with the same request_id, one row](docs/retries.svg)
+**Retries** are safe: a lost response followed by a retry with the same `request_id` returns the same run. See [docs/retries.svg](docs/retries.svg).
 
 ## Roadmap
 
 - iOS: GPS distance and pace for outdoor runs.
-- Password reset for password accounts (needs an email provider, e.g. Resend).
+- Password reset for password accounts (needs an email provider).
+- See also open [issues](https://github.com/gadshushan3030/pacebeep/issues) and [good first issues](docs/good-first-issues.md).
 
 ## Contributing
 
-Issues and pull requests are welcome, from a typo to a new MCP tool. See [CONTRIBUTING.md](.github/CONTRIBUTING.md). If PaceBeep is useful to you, a star helps other runners find it.
+Issues and pull requests are welcome — from a typo to a new MCP tool.
+
+- **[CONTRIBUTING.md](CONTRIBUTING.md)** — setup, PR checklist, how to pick a starter task
+- **[CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)** — Contributor Covenant
+- **[docs/good-first-issues.md](docs/good-first-issues.md)** — 10 small, real tasks ready to open as `good first issue`
+
+If PaceBeep is useful to you, a star helps other runners and MCP builders find it. App Store reviews help too.
 
 ## License
 
