@@ -1,0 +1,66 @@
+name: Bug
+description: Something did not work in the iPhone app, web dashboard, or MCP server
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug. The more concrete the steps, the faster we can fix it.
+  - type: textarea
+    id: happened
+    attributes:
+      label: What happened
+      description: What you saw (include screenshots or error text if you have them).
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Where
+      options:
+        - iPhone app
+        - Live Activity / Dynamic Island
+        - Web dashboard
+        - MCP / AI coach connection
+        - Auth / sign-in
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: device
+    attributes:
+      label: Device / environment
+      description: e.g. iPhone 15, iOS 18.2 — or browser name for web
+    validations:
+      required: true
+  - type: input
+    id: app_version
+    attributes:
+      label: App / build version
+      description: App Store version, or "local from commit …" for a self-build
+  - type: dropdown
+    id: workout_type
+    attributes:
+      label: Workout type (if relevant)
+      options:
+        - Interval run
+        - Full workout (blocks / gym)
+        - Quick test
+        - Not applicable

@@ -1,0 +1,11 @@
+blank_issues_enabled: true
+contact_links:
+  - name: App Store listing
+    url: https://apps.apple.com/app/pacebeep/id6818211974
+    about: Download PaceBeep or leave an App Store review.
+  - name: Good first issues (doc)
+    url: https://github.com/gadshushan3030/pacebeep/blob/main/docs/good-first-issues.md
+    about: Small, scoped tasks ready to claim as a first contribution.
+  - name: Author on X
+    url: https://x.com/ShushanGad
+    about: Gad Soussan (@ShushanGad) — quick questions about PaceBeep.
