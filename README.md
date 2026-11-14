@@ -54,15 +54,30 @@ Self-hosted: use `https://<your-app>/mcp` instead (see [Deploy your own](#deploy
 
 ### Claude (claude.ai / Desktop)
 
-**Settings → Connectors → Add custom connector** → URL `https://pacebeep.vercel.app/mcp`. Sign in and **Allow** when PaceBeep’s consent page opens.
+**Customize → Connectors → Add → Custom → Web** (wording varies slightly by plan) → URL `https://pacebeep.vercel.app/mcp`. Choose sign-in when prompted; complete OAuth on PaceBeep’s consent page. Remote connectors are reached from Anthropic’s cloud, so this URL must be publicly reachable (the hosted endpoint is).
 
 ### Claude Code
+
+Verified against [Claude Code MCP docs](https://code.claude.com/docs/en/mcp): a `url` with no `type` is treated as stdio and skipped.
 
 ```bash
 claude mcp add --transport http pacebeep https://pacebeep.vercel.app/mcp
 ```
 
-(Or a `.mcp.json` entry with `"type": "http"` and that URL — a bare `"url"` alone is treated as stdio and fails.)
+Or in `.mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "pacebeep": {
+      "type": "http",
+      "url": "https://pacebeep.vercel.app/mcp"
+    }
+  }
+}
+```
+
+(`"streamable-http"` is accepted as an alias for `"http"`.)
 
 ### Cursor
 
@@ -173,7 +188,7 @@ Requires Xcode 26 and an Apple ID (a free one works; the app then expires after 
 3. Connect the iPhone, turn on Settings → Privacy & Security → Developer Mode, open `ios/PaceBeep.xcodeproj` and Run.
 4. First launch: trust the developer in Settings → General → VPN & Device Management.
 
-Every build defaults to `https://pacebeep.vercel.app` (`SERVER_URL` in `ios/Config.xcconfig`), not only the App Store build — so a local Run without an override writes to the live server. To use your own backend, set `SERVER_URL` in `Local.xcconfig` (`http:/$()/localhost:3200` in the simulator, or your Mac’s LAN address on a physical device, with the same address as `BETTER_AUTH_URL` in `web/.env.local`).
+Every build defaults to `https://pacebeep.vercel.app` (`SERVER_URL` in `ios/Config.xcconfig`), not only the App Store build — so a local Run without an override writes to the live server. To use your own backend, set `SERVER_URL` in `Local.xcconfig`: `http:/$()/localhost:3200` in the simulator, or your Mac’s LAN address on a physical device. On a device that LAN address must also be `BETTER_AUTH_URL` in `web/.env.local`: the app requests tokens with `resource = <SERVER_URL>/mcp` (`ios/PaceBeep/Auth.swift`), and the server checks JWT `aud` against `MCP_RESOURCE` (`${BETTER_AUTH_URL}/mcp` in `web/lib/auth.ts` / `web/lib/bearer.ts`). If those disagree, sign-in fails.
 
 Sign in once, ask your assistant to plan your week, and workouts show up under **From your coach**; pull to refresh. Workouts are cached and finished runs wait in an outbox, so a gym without signal is fine.
 
@@ -184,8 +199,8 @@ The whole workout is rendered into one audio track (silence with beeps at exact 
 1. Import the repo in Vercel with **Root Directory = `web`**.
 2. **Storage → Create Database → Neon (Free)**, connect it with env prefix `DATABASE` (gives `DATABASE_URL`).
 3. Environment variables: `BETTER_AUTH_SECRET` (`openssl rand -hex 32`), `BETTER_AUTH_URL` (your production URL), optionally `SIGNUP_ENABLED`.
-4. Optional Google / Apple sign-in and APNs: see `web/.env.example` and the comments there for redirect URIs and key setup. Google: while the OAuth consent screen is in "Testing", only listed test users can sign in; to open it, fill the Branding page (home page, `/privacy`, `/terms`) and click **Publish app**.
-5. Deploy. The build (`vercel-build`) applies `web/db/migrations/*.sql` before `next build`. Only `main` deploys (`web/vercel.json` turns off deployments for other branches): the environment variables are production-only, and giving previews the production `DATABASE_URL` would let any branch migrate the production database.
+4. Optional Google / Apple sign-in and APNs: see `web/.env.example` and the comments there for redirect URIs and key setup.
+5. Deploy. The build (`vercel-build`) applies `web/db/migrations/*.sql` before `next build`. Only `main` deploys (`web/vercel.json`).
 
 ## Security notes
 
