@@ -199,8 +199,8 @@ The whole workout is rendered into one audio track (silence with beeps at exact 
 1. Import the repo in Vercel with **Root Directory = `web`**.
 2. **Storage → Create Database → Neon (Free)**, connect it with env prefix `DATABASE` (gives `DATABASE_URL`).
 3. Environment variables: `BETTER_AUTH_SECRET` (`openssl rand -hex 32`), `BETTER_AUTH_URL` (your production URL), optionally `SIGNUP_ENABLED`.
-4. Optional Google / Apple sign-in and APNs: see `web/.env.example` and the comments there for redirect URIs and key setup.
-5. Deploy. The build (`vercel-build`) applies `web/db/migrations/*.sql` before `next build`. Only `main` deploys (`web/vercel.json`).
+4. Optional Google / Apple sign-in and APNs: see `web/.env.example` and the comments there for redirect URIs and key setup. Google: while the OAuth consent screen is in "Testing", only listed test users can sign in; to open it, fill the Branding page (home page, `/privacy`, `/terms`) and click **Publish app**.
+5. Deploy. The build (`vercel-build`) applies `web/db/migrations/*.sql` before `next build`. Only `main` deploys (`web/vercel.json` turns off deployments for other branches): the environment variables are production-only, and giving previews the production `DATABASE_URL` would let any branch migrate the production database.
 
 ## Security notes
 
