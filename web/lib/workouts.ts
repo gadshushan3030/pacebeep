@@ -87,8 +87,8 @@ export type RunInput = z.infer<typeof runInput>;
 
 // An error the caller caused, with the HTTP status an API route answers.
 export class ClientError extends Error {
-  status: 400 | 404;
-  constructor(message: string, status: 400 | 404) {
+  status: 400 | 404 | 409;
+  constructor(message: string, status: 400 | 404 | 409) {
     super(message);
     this.status = status;
   }
@@ -188,8 +188,18 @@ export async function approveWorkout(userId: string, workoutId: string, schedule
   return row.id;
 }
 
+// Deletes a planned workout. A workout with a run stays: runs are history and keep its name (409).
 export async function deleteWorkout(userId: string, workoutId: string) {
-  await sql("delete from workouts where id = $1 and user_id = $2", [workoutId, userId]);
+  const [row] = await sql<{ id: string }>(
+    `delete from workouts w where id = $1 and user_id = $2
+       and not exists (select 1 from runs where workout_id = w.id) returning id`,
+    [workoutId, userId],
+  );
+  if (row) return row.id;
+  await assertOwned("workouts", userId, workoutId).catch(() => {
+    throw new ClientError("workout not found", 404);
+  });
+  throw new ClientError("workout has a run; runs are never deleted", 409);
 }
 
 export async function recordRun(userId: string, requestId: string, input: RunInput) {

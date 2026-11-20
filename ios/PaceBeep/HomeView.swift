@@ -9,6 +9,7 @@ struct HomeView: View {
     var opened: String?
     let start: (Workout) -> Void
     @State private var approving: Workout?
+    @State private var deleting: Workout?
 
     var body: some View {
         let next = coach.workouts.first { $0.id == opened } ?? coach.workouts.first { !$0.done }
@@ -18,6 +19,7 @@ struct HomeView: View {
                 header
                 if let next {
                     NextCard(workout: next, approve: { approving = next }) { go(next) }
+                        .contextMenu { deleteButton(next) }
                 } else {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Nothing planned").font(.display(30))
@@ -32,7 +34,7 @@ struct HomeView: View {
                 if !others.isEmpty {
                     VStack(alignment: .leading, spacing: 10) {
                         Text("Coming up").eyebrow()
-                        ForEach(others) { w in WorkoutRow(workout: w, approve: { approving = w }) { go(w) } }
+                        ForEach(others) { w in WorkoutRow(workout: w, approve: { approving = w }) { go(w) }.contextMenu { deleteButton(w) } }
                     }
                 }
                 VStack(alignment: .leading, spacing: 10) {
@@ -72,6 +74,11 @@ struct HomeView: View {
         .background(Theme.paper)
         .refreshable { await coach.sync() }
         .sheet(item: $approving) { w in ApproveSheet(workout: w) { coach.approve(w, at: $0) } }
+        .confirmationDialog("Delete \(deleting?.name ?? "")?", isPresented: Binding(get: { deleting != nil }, set: { if !$0 { deleting = nil } }), titleVisibility: .visible) {
+            Button("Delete workout", role: .destructive) { if let deleting { coach.delete(deleting) } }
+        } message: {
+            Text("It leaves your plan and its reminder goes. Your coach sees it gone.")
+        }
         .alert("Remind you when it's time?", isPresented: $coach.remindersOffer) {
             Button("Remind me") { Task { await coach.enableReminders() } }
             Button("Not now", role: .cancel) {}
@@ -79,6 +86,11 @@ struct HomeView: View {
             Text("A reminder at the time of each workout you approve. Nothing else.")
         }
         .preferredColorScheme(.light)
+    }
+
+    /// Long-press a workout not yet run: Delete, after a confirmation.
+    @ViewBuilder private func deleteButton(_ w: Workout) -> some View {
+        if !w.done { Button("Delete", systemImage: "trash", role: .destructive) { deleting = w } }
     }
 
     /// Start on a workout still waiting for approval approves it as it is.

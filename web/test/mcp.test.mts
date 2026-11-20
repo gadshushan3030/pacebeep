@@ -30,7 +30,9 @@ test("MCP server initializes and lists its tools", async () => {
   const list = await rpc({ id: 2, method: "tools/list", params: {} }, sessionId);
   assert.equal(list.res.status, 200, JSON.stringify(list.body));
   const names = list.body.result.tools.map((t: { name: string }) => t.name);
-  for (const name of ["get_summary", "create_workout", "plan_week", "update_workout", "record_run"]) assert.ok(names.includes(name), name);
+  for (const name of ["get_summary", "create_workout", "plan_week", "update_workout", "delete_workout", "record_run"]) assert.ok(names.includes(name), name);
+  const del = list.body.result.tools.find((t: { name: string }) => t.name === "delete_workout");
+  assert.equal(del.annotations.destructiveHint, true);
   const planWeek = list.body.result.tools.find((t: { name: string }) => t.name === "plan_week");
   assert.deepEqual(planWeek.inputSchema.properties.workouts.items.required?.includes("scheduled_for"), true);
 });
