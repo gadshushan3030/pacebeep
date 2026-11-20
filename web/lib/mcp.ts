@@ -4,6 +4,7 @@ import { notifyCoachChange } from "@/lib/push";
 import {
   addRunFeedback,
   createWorkout,
+  deleteWorkout,
   getRun,
   getWorkout,
   listRuns,
@@ -27,6 +28,7 @@ const INSTRUCTIONS = `PaceBeep: interval running, and full gym workouts. You coa
 - Runs are what happened. source "device" = recorded by the phone; "manual" = the runner told you. Never invent measurements.
 - run feedback (RPE 1-10, notes) is the runner's self-report; keep it separate from measured data.
 - Every write takes request_id: generate a new UUID per logical save and reuse it when retrying; replays never duplicate.
+- delete_workout removes a planned workout (a mistake, a test, a duplicate) from the runner's schedule and today card. It refuses a workout that already has a run: runs are history. Prefer it over moving a workout's date to hide it.
 - Every write returns an id; read it back with get_workout / get_run to confirm.`;
 
 const requestId = z
@@ -127,6 +129,18 @@ export function buildServer(userId: string) {
       if (changed.length) await notifyCoachChange(userId, id, "Your plan changed");
       return json({ workout_id: id, changed, verify_with: "get_workout" });
     },
+  );
+
+  server.registerTool(
+    "delete_workout",
+    {
+      title: "Delete a workout",
+      description:
+        "Deletes a planned workout so it leaves the runner's schedule, today card and reminders. Fails if the workout already has a run (runs are never deleted).",
+      inputSchema: z.object({ workout_id: z.uuid() }),
+      annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
+    },
+    async ({ workout_id }) => json({ workout_id: await deleteWorkout(userId, workout_id), deleted: true }),
   );
 
   server.registerTool(

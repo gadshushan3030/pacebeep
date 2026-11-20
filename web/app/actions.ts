@@ -50,7 +50,10 @@ export async function acceptWorkout(workoutId: string) {
 
 export async function removeWorkout(workoutId: string) {
   const user = await requireUser();
-  await deleteWorkout(user.id, workoutId);
+  // A workout with a run stays (409): the list simply still shows it.
+  await deleteWorkout(user.id, workoutId).catch((e) => {
+    if (!(e instanceof ClientError)) throw e;
+  });
   revalidatePath("/", "layout");
 }
 

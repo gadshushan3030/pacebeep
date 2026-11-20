@@ -18,6 +18,7 @@ final class Coach {
     @ObservationIgnored private let auth = Auth()
     @ObservationIgnored private var outbox: [Upload] = []
     @ObservationIgnored private var approvals: [Approval] = []
+    @ObservationIgnored private var deletions: [Deletion] = []
     @ObservationIgnored private var flushing = false
     /// The list as the server sent it (plus approvals given here), cached; the reminders follow it.
     @ObservationIgnored private var server: [ServerWorkout] = [] {
@@ -34,6 +35,7 @@ final class Coach {
         workouts = server.map(\.workout)
         if let data = UserDefaults.standard.data(forKey: "outbox") { outbox = (try? JSONDecoder().decode([Upload].self, from: data)) ?? [] }
         if let data = UserDefaults.standard.data(forKey: "approvals") { approvals = (try? JSONDecoder().decode([Approval].self, from: data)) ?? [] }
+        if let data = UserDefaults.standard.data(forKey: "deletions") { deletions = (try? JSONDecoder().decode([Deletion].self, from: data)) ?? [] }
         pendingRuns = outbox.count
     }
 
@@ -71,7 +73,8 @@ final class Coach {
             // blocks=1: full workouts too (an app from before them would fail to decode them).
             let (data, http) = try await auth.send(URLRequest(url: Auth.server.appending(path: "api/workouts").appending(queryItems: [.init(name: "blocks", value: "1")])))
             guard http.statusCode == 200 else { throw URLError(.badServerResponse) }
-            server = Self.decode(data)
+            // A delete still waiting to be sent stays deleted here.
+            server = Self.decode(data).filter { w in !deletions.contains { $0.workout_id == w.id } }
             lastSync = Date()
             message = nil
             // Once, in context: the coach has planned something with a time, or something to approve.
@@ -106,6 +109,16 @@ final class Coach {
         Task { await flush() }
     }
 
+    /// Deletes a planned workout: gone from the list (and its reminder) at once, sent like a run is.
+    /// The server keeps a workout that already has a run; it comes back on the next sync.
+    func delete(_ workout: Workout) {
+        server.removeAll { $0.id == workout.id }
+        approvals.removeAll { $0.workout_id == workout.id }
+        deletions.append(Deletion(workout_id: workout.id))
+        saveOutbox()
+        Task { await flush() }
+    }
+
     /// "Remind me" in the offer: the system prompt, then the reminders (denied: none, quietly),
     /// and the device token for the coach's push.
     func enableReminders() async {
@@ -135,6 +148,12 @@ final class Coach {
             outbox.removeFirst()
             saveOutbox()
         }
+        // After the runs: a run of this workout still waiting must reach the server first (it then refuses the delete).
+        while let next = deletions.first {
+            guard await post("api/workouts/delete", next) else { return }
+            deletions.removeFirst()
+            saveOutbox()
+        }
     }
 
     /// False when the server could not take it now (offline, signed out, a server error): it is
@@ -151,6 +170,7 @@ final class Coach {
     private func saveOutbox() {
         UserDefaults.standard.set(try? JSONEncoder().encode(outbox), forKey: "outbox")
         UserDefaults.standard.set(try? JSONEncoder().encode(approvals), forKey: "approvals")
+        UserDefaults.standard.set(try? JSONEncoder().encode(deletions), forKey: "deletions")
         pendingRuns = outbox.count
     }
 
@@ -250,6 +270,11 @@ struct Device: Codable {
 struct Approval: Codable {
     let workout_id: String
     let scheduled_time: String?
+}
+
+/// POST /api/workouts/delete: the runner deletes a planned workout.
+struct Deletion: Codable {
+    let workout_id: String
 }
 
 /// POST /api/runs: a run recorded by the phone, optionally with the runner's RPE.

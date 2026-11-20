@@ -3,7 +3,7 @@
 import assert from "node:assert/strict";
 import { after, before, test } from "node:test";
 import { pool, sql } from "@/lib/db";
-import { approveWorkout, ClientError, createWorkout, getWorkout, summary, updateWorkout, upcomingWorkouts, workoutInput, type WorkoutInput } from "@/lib/workouts";
+import { approveWorkout, ClientError, createWorkout, deleteWorkout, getWorkout, recordRun, summary, updateWorkout, upcomingWorkouts, workoutInput, type WorkoutInput } from "@/lib/workouts";
 
 const skip = !process.env.DATABASE_URL && "DATABASE_URL unset";
 const userId = `test-${Date.now()}`;
@@ -82,4 +82,14 @@ test("a time needs a date: create, update and approve answer 400", { skip }, asy
   await assert.rejects(updateWorkout(userId, bare, { scheduled_time: "07:00" }, "assistant"), (e) => e instanceof ClientError && e.status === 400);
   await assert.rejects(approveWorkout(userId, bare, "07:00"), (e) => e instanceof ClientError && e.status === 400);
   await assert.rejects(approveWorkout(userId, "00000000-0000-0000-0000-000000000000"), (e) => e instanceof ClientError && e.status === 404);
+});
+
+test("delete removes a planned workout; a workout with a run stays (409); gone is 404", { skip }, async () => {
+  const { id: plan } = await createWorkout(userId, "d1", { ...run, name: "test" }, "assistant");
+  assert.equal(await deleteWorkout(userId, plan), plan);
+  assert.ok(!(await upcomingWorkouts(userId, "2099-01-01", false)).some((x) => x.id === plan));
+  await assert.rejects(deleteWorkout(userId, plan), (e) => e instanceof ClientError && e.status === 404);
+  const { id: done } = await createWorkout(userId, "d2", { ...run, name: "done" }, "app");
+  await recordRun(userId, "r1", { workout_id: done, source: "device", started_at: "2099-01-05T18:00:00Z", ended_at: "2099-01-05T18:30:00Z", intervals: [] });
+  await assert.rejects(deleteWorkout(userId, done), (e) => e instanceof ClientError && e.status === 409);
 });
