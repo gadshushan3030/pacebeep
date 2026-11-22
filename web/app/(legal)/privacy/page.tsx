@@ -8,7 +8,7 @@ export default function Privacy() {
   return (
     <>
       <h1>Privacy Policy</h1>
-      <p className="muted text-sm">Last updated: 1 October 2026</p>
+      <p className="muted text-sm">Last updated: 22 November 2026</p>
 
       <p>
         PaceBeep is an open-source interval-running app run by Gad Shushan. This page explains what data PaceBeep keeps, why, who
@@ -20,9 +20,10 @@ export default function Privacy() {
         <li><strong>Account:</strong> your email address and name. If you sign in with Google, also your Google account id and profile picture link. If you sign in with Apple, also your Apple account id; the email may be a private relay address from Apple. If you use a password, only a one-way hash of it.</li>
         <li><strong>Sign-in sessions:</strong> a session cookie, and the IP address and browser/device description of each session.</li>
         <li><strong>Training data you or your assistant add:</strong> workout plans, runs (times, distance, per-interval durations and pace), and your feedback (effort rating and notes).</li>
+        <li><strong>Apple Watch metrics:</strong> if you run with the PaceBeep Watch app, your heart rate (average and maximum, for the run and for each interval) and the distance, measured by the Watch, are sent to the server with the run. The Watch app records the workout in Apple Health on your device; PaceBeep reads nothing else from Health and sends no individual heart-rate readings or GPS route.</li>
         <li><strong>Assistant connections:</strong> which AI assistants you approved, when, and the access and refresh tokens issued to them.</li>
       </ul>
-      <p>We do not use advertising, tracking or analytics cookies, and we do not collect location or health data from your device.</p>
+      <p>We do not use advertising, tracking or analytics cookies, and we do not collect location data from your device. The only health data we collect is the Watch heart rate and distance described above, and only if you use the Watch app.</p>
 
       <h2>How we use it</h2>
       <p>

@@ -1,3 +1,4 @@
+import HealthKit
 import SwiftUI
 import UserNotifications
 
@@ -15,8 +16,13 @@ struct PaceBeepApp: App {
     }
 }
 
-/// Only for the APNs device token: iOS hands it to the app delegate, each launch (it can change).
+/// For the APNs device token (iOS hands it to the app delegate, each launch: it can change), and
+/// for a Health permission the Watch app asks for on the phone.
 final class AppDelegate: NSObject, UIApplicationDelegate {
+    func applicationShouldRequestHealthAuthorization(_ application: UIApplication) {
+        HKHealthStore().handleAuthorizationForExtension { _, _ in }
+    }
+
     func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
         Reminders.shared.deviceToken = deviceToken.map { String(format: "%02x", $0) }.joined()
     }

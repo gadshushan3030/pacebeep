@@ -290,12 +290,33 @@ struct Upload: Codable {
         var reps: Int?
         var planned_weight_kg: Double?
         var weight_kg: Double?
+        /// From the Watch: bpm while in this interval.
+        var avg_hr: Int?
+        var max_hr: Int?
     }
     struct Run: Codable {
         let workout_id: String?
         let started_at: String
         let ended_at: String
-        let intervals: [Interval]
+        var intervals: [Interval]
+        /// From the Watch, when one was worn.
+        var distance_m: Int?
+        var avg_hr: Int?
+        var max_hr: Int?
+
+        /// The Watch's measurements; `starts`: when each interval began (nil: unknown), by index.
+        mutating func add(_ stats: WatchLink.Stats, starts: [Date?]) {
+            // The server takes 30-250 bpm; a reading outside would reject the whole run.
+            func bpm(_ x: Double) -> Int { min(250, max(30, Int(x.rounded()))) }
+            avg_hr = stats.avg.map(bpm)
+            max_hr = stats.max.map(bpm)
+            distance_m = stats.distance.map { min(1_000_000, Int($0.rounded())) }
+            for k in intervals.indices where k < starts.count {
+                guard let from = starts[k], let hr = stats.heartRate(from: from, to: from + Double(intervals[k].actual_sec)) else { continue }
+                intervals[k].avg_hr = bpm(Double(hr.avg))
+                intervals[k].max_hr = bpm(Double(hr.max))
+            }
+        }
     }
     struct Feedback: Codable {
         let request_id: String
@@ -303,6 +324,6 @@ struct Upload: Codable {
     }
 
     let request_id: String
-    let run: Run
+    var run: Run
     var feedback: Feedback?
 }
