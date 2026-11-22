@@ -44,9 +44,10 @@ final class WatchLink: NSObject, WCSessionDelegate {
         }
     }
 
-    /// Opens the Watch app on a workout session, if a Watch with the app is paired. `mixed`: a full
-    /// workout (strength and runs) records as mixed cardio, else as an outdoor run.
-    func start(mixed: Bool) {
+    /// Opens the Watch app on a workout session, if a Watch with the app is paired. Recorded as a
+    /// run, strength training (sets only) or mixed cardio (both); indoors (no GPS) for a treadmill
+    /// run as the coach planned it, or strength only.
+    func start(_ w: Workout) {
         launched = false
         running = false
         stats = nil
@@ -54,8 +55,10 @@ final class WatchLink: NSObject, WCSessionDelegate {
         let s = WCSession.default
         guard HKHealthStore.isHealthDataAvailable(), s.activationState == .activated, s.isPaired, s.isWatchAppInstalled else { return }
         let config = HKWorkoutConfiguration()
-        config.activityType = mixed ? .mixedCardio : .running
-        config.locationType = mixed ? .unknown : .outdoor
+        let sets = w.segments.contains { $0.kind == .set }
+        let runs = w.segments.contains { [.warmup, .work, .cooldown].contains($0.kind) }
+        config.activityType = !runs ? .traditionalStrengthTraining : sets ? .mixedCardio : .running
+        config.locationType = w.indoor || !runs ? .indoor : .outdoor
         launched = true
         Task {
             // Asked here once, on the phone (the Watch app shares the answer).

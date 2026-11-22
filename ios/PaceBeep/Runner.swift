@@ -148,7 +148,7 @@ final class Runner {
         pausedTotal = 0
         latency = 0
         // Not for runs shorter than recorded ones (the quick test): those would only clutter Fitness.
-        if w.total >= 300 { WatchLink.shared.start(mixed: w.segments.contains { $0.kind == .set }) }
+        if w.total >= 300 { WatchLink.shared.start(w) }
         play(from: 0)
     }
 

@@ -191,6 +191,8 @@ private struct ServerWorkout: Codable {
     let cooldown_sec: Int
     let target_pace_sec_per_km: Int?
     let blocks: [Block]?
+    /// "indoor" (a treadmill) or "outdoor"; nil = outdoor.
+    let location: String?
     let scheduled_for: String?
     var scheduled_time: String?
     /// "pending" or "approved" (nil from a server, or a cache, before statuses).
@@ -226,6 +228,7 @@ private struct ServerWorkout: Codable {
         w.scheduledTime = scheduled_time
         w.pending = status == "pending"
         w.done = done
+        w.indoor = location == "indoor"
         return w
     }
 

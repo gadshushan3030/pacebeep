@@ -42,6 +42,7 @@ export const workoutFields = {
   repeats: runFields.repeats.optional().describe("Interval run only; leave out when giving blocks"),
   work_sec: runFields.work_sec.optional().describe("Interval run only; leave out when giving blocks"),
   blocks: z.array(blockInput).min(1).max(30).optional().describe("A full workout, played in order: strength exercises and runs"),
+  location: z.enum(["outdoor", "indoor"]).optional().describe("Where the runs happen; default outdoor. indoor = treadmill: the Watch estimates distance without GPS"),
   scheduled_for: z.iso.date().optional().describe("YYYY-MM-DD"),
   scheduled_time: z.iso.time({ precision: -1 }).optional().describe("HH:MM, the runner's local time of day; the phone reminds them then"),
 };
@@ -226,7 +227,7 @@ export type Workout = WorkoutInput & { id: string; source: string; status: "pend
 export function listWorkouts(userId: string, limit = 50) {
   return sql<Workout>(
     `select id, source, name, notes, warmup_sec, repeats, work_sec, rest_sec, cooldown_sec,
-            target_pace_sec_per_km, blocks, scheduled_for, scheduled_time, status, created_at
+            target_pace_sec_per_km, blocks, location, scheduled_for, scheduled_time, status, created_at
      from workouts where user_id = $1
      order by scheduled_for nulls last, created_at desc limit $2`,
     [userId, limit],
@@ -239,7 +240,7 @@ export function listWorkouts(userId: string, limit = 50) {
 export function upcomingWorkouts(userId: string, fromDate: string, withBlocks: boolean, limit = 30) {
   return sql<Workout & { done: boolean }>(
     `select w.id, w.name, w.notes, w.warmup_sec, w.repeats, w.work_sec, w.rest_sec, w.cooldown_sec,
-            w.target_pace_sec_per_km, w.blocks, w.scheduled_for, w.scheduled_time, w.status,
+            w.target_pace_sec_per_km, w.blocks, w.location, w.scheduled_for, w.scheduled_time, w.status,
             exists (select 1 from runs r where r.workout_id = w.id) as done
      from workouts w where w.user_id = $1 and (w.scheduled_for >= $2 or w.scheduled_for is null)
        and ($3 or w.blocks is null)
@@ -319,7 +320,7 @@ export async function summary(userId: string) {
       [userId],
     ),
     sql<Workout>(
-      `select id, name, scheduled_for, scheduled_time, status, repeats, work_sec, rest_sec, blocks from workouts
+      `select id, name, scheduled_for, scheduled_time, status, repeats, work_sec, rest_sec, blocks, location from workouts
        where user_id = $1 and scheduled_for >= current_date order by scheduled_for limit 7`,
       [userId],
     ),
