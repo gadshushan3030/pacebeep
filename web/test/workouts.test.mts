@@ -3,7 +3,7 @@
 import assert from "node:assert/strict";
 import { after, before, test } from "node:test";
 import { pool, sql } from "@/lib/db";
-import { approveWorkout, ClientError, createWorkout, deleteWorkout, getWorkout, recordRun, summary, updateWorkout, upcomingWorkouts, workoutInput, type WorkoutInput } from "@/lib/workouts";
+import { approveWorkout, ClientError, createWorkout, deleteWorkout, getRun, getWorkout, recordRun, summary, updateWorkout, upcomingWorkouts, workoutInput, type WorkoutInput } from "@/lib/workouts";
 
 const skip = !process.env.DATABASE_URL && "DATABASE_URL unset";
 const userId = `test-${Date.now()}`;
@@ -92,4 +92,14 @@ test("delete removes a planned workout; a workout with a run stays (409); gone i
   const { id: done } = await createWorkout(userId, "d2", { ...run, name: "done" }, "app");
   await recordRun(userId, "r1", { workout_id: done, source: "device", started_at: "2099-01-05T18:00:00Z", ended_at: "2099-01-05T18:30:00Z", intervals: [] });
   await assert.rejects(deleteWorkout(userId, done), (e) => e instanceof ClientError && e.status === 409);
+});
+
+test("a run keeps the watch's heart rate, per run and per interval; max below avg is a 400", { skip }, async () => {
+  const at = { source: "device" as const, started_at: "2099-01-06T18:00:00Z", ended_at: "2099-01-06T18:30:00Z" };
+  const { id } = await recordRun(userId, "hr1", { ...at, distance_m: 5000, avg_hr: 148, max_hr: 171, intervals: [{ kind: "work", actual_sec: 60, avg_hr: 160, max_hr: 171 }] });
+  const run = await getRun(userId, id);
+  assert.equal(run.avg_hr, 148);
+  assert.equal(run.max_hr, 171);
+  assert.equal(run.intervals[0].avg_hr, 160);
+  await assert.rejects(recordRun(userId, "hr2", { ...at, avg_hr: 150, max_hr: 140, intervals: [] }), (e) => e instanceof ClientError && e.status === 400);
 });

@@ -61,12 +61,17 @@ export const workoutChanges = z
   })
   .partial();
 
+// Beats per minute, from a watch. Measured, never estimated.
+const bpm = z.number().int().min(30).max(250);
+
 export const intervalInput = z.object({
   kind: z.enum(["warmup", "work", "rest", "cooldown", "set"]),
   planned_sec: z.number().int().min(0).max(7200).optional(),
   actual_sec: z.number().int().min(0).max(7200),
   distance_m: z.number().int().min(0).max(100000).optional(),
   avg_pace_sec_per_km: z.number().int().min(60).max(3600).optional(),
+  avg_hr: bpm.optional(),
+  max_hr: bpm.optional(),
   // A strength set: what was planned and what was done.
   exercise: z.string().max(100).optional(),
   planned_reps: z.number().int().min(0).max(1000).optional(),
@@ -81,6 +86,8 @@ export const runInput = z.object({
   started_at: z.iso.datetime({ offset: true }),
   ended_at: z.iso.datetime({ offset: true }),
   distance_m: z.number().int().min(0).max(1000000).optional(),
+  avg_hr: bpm.optional().describe("Average heart rate over the run, from a watch"),
+  max_hr: bpm.optional().describe("Highest heart rate in the run, from a watch"),
   intervals: z.array(intervalInput).max(200).default([]),
 });
 export type RunInput = z.infer<typeof runInput>;
@@ -203,6 +210,8 @@ export async function deleteWorkout(userId: string, workoutId: string) {
 }
 
 export async function recordRun(userId: string, requestId: string, input: RunInput) {
+  // Checked here, not in runInput: zod 4 cannot .omit() (the app's route) a refined schema.
+  if (input.avg_hr != null && input.max_hr != null && input.max_hr < input.avg_hr) throw new ClientError("max_hr is below avg_hr", 400);
   if (input.workout_id) await assertOwned("workouts", userId, input.workout_id);
   return insertOnce("runs", userId, requestId, { ...input, intervals: JSON.stringify(input.intervals) });
 }
@@ -253,13 +262,15 @@ export type Run = {
   started_at: Date;
   ended_at: Date;
   distance_m: number | null;
+  avg_hr: number | null;
+  max_hr: number | null;
   intervals: z.infer<typeof intervalInput>[];
 };
 
 // With the latest RPE the runner gave each run.
 export function listRuns(userId: string, limit = 20) {
   return sql<Run & { rpe: number | null }>(
-    `select r.id, r.workout_id, w.name as workout_name, r.source, r.started_at, r.ended_at, r.distance_m, r.intervals,
+    `select r.id, r.workout_id, w.name as workout_name, r.source, r.started_at, r.ended_at, r.distance_m, r.avg_hr, r.max_hr, r.intervals,
             (select f.rpe from run_feedback f where f.run_id = r.id and f.rpe is not null order by f.created_at desc limit 1) as rpe
      from runs r left join workouts w on w.id = r.workout_id
      where r.user_id = $1 order by r.started_at desc limit $2`,
@@ -282,7 +293,7 @@ export function weekWorkouts(userId: string, from: string, to: string) {
 
 export async function getRun(userId: string, runId: string) {
   const [run] = await sql<Run>(
-    `select r.id, r.workout_id, w.name as workout_name, r.source, r.started_at, r.ended_at, r.distance_m, r.intervals
+    `select r.id, r.workout_id, w.name as workout_name, r.source, r.started_at, r.ended_at, r.distance_m, r.avg_hr, r.max_hr, r.intervals
      from runs r left join workouts w on w.id = r.workout_id
      where r.id = $1 and r.user_id = $2`,
     [runId, userId],
