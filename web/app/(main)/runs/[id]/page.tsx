@@ -27,6 +27,7 @@ export default async function RunPage({ params }: PageProps<"/runs/[id]">) {
   const rated = [...run.feedback].reverse().find((f) => f.rpe != null);
   const notes = run.feedback.filter((f) => f.notes);
   const withPace = run.intervals.some((iv) => iv.avg_pace_sec_per_km);
+  const withHr = run.intervals.some((iv) => iv.avg_hr);
   let rep = 0;
 
   return (
@@ -56,6 +57,7 @@ export default async function RunPage({ params }: PageProps<"/runs/[id]">) {
                   <th scope="col" className="text-start font-bold">Planned</th>
                   <th scope="col" className="text-start font-bold">Actual</th>
                   {withPace && <th scope="col" className="text-start font-bold">Pace</th>}
+                  {withHr && <th scope="col" className="text-start font-bold">HR</th>}
                   <th scope="col" className="w-[38%]"><span className="sr-only">Length</span></th>
                 </tr>
               </thead>
@@ -70,6 +72,7 @@ export default async function RunPage({ params }: PageProps<"/runs/[id]">) {
                       <td>{plannedText(iv)}</td>
                       <td>{actualText(iv)}</td>
                       {withPace && <td>{iv.avg_pace_sec_per_km ? fmtDuration(iv.avg_pace_sec_per_km) : "–"}</td>}
+                      {withHr && <td>{iv.avg_hr ?? "–"}</td>}
                       <td>
                         {/* The track is the plan; the fill is what was run. */}
                         <div className="h-2 rounded bg-[var(--border)]" style={{ width: `${(planned / longest) * 100}%` }}>
@@ -107,6 +110,8 @@ export default async function RunPage({ params }: PageProps<"/runs/[id]">) {
             {sets > 0 && <Fact value={`${sets}`} label="sets" />}
             {work.length > 0 && <Fact value={`${repsDone} / ${work.length}`} label="reps" />}
             {run.distance_m != null && <Fact value={(run.distance_m / 1000).toFixed(2)} label="km" />}
+            {run.avg_hr != null && <Fact value={`${run.avg_hr}`} label="avg bpm" />}
+            {run.max_hr != null && <Fact value={`${run.max_hr}`} label="max bpm" />}
           </section>
         </div>
       </div>

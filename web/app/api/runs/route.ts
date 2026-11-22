@@ -1,6 +1,6 @@
 import * as z from "zod/v4";
 import { withBearer } from "@/lib/bearer";
-import { addRunFeedback, recordRun, runInput } from "@/lib/workouts";
+import { addRunFeedback, ClientError, recordRun, runInput } from "@/lib/workouts";
 
 const requestId = z.string().min(8).max(100);
 
@@ -20,8 +20,17 @@ export const POST = withBearer(async (request, { userId }) => {
   if (!parsed.success) return Response.json({ error: z.prettifyError(parsed.error) }, { status: 400 });
   const { request_id, run, feedback } = parsed.data;
   const save = (workout_id?: string) => recordRun(userId, request_id, { ...run, workout_id, source: "device" });
-  // A workout deleted since the app fetched it must not lose the run.
-  const { id } = await save(run.workout_id).catch(() => save(undefined));
-  if (feedback) await addRunFeedback(userId, feedback.request_id, id, feedback.rpe, feedback.notes);
-  return Response.json({ run_id: id });
+  try {
+    // A workout deleted since the app fetched it must not lose the run.
+    const { id } = await save(run.workout_id).catch((e) => {
+      if (e instanceof ClientError) throw e;
+      return save(undefined);
+    });
+    if (feedback) await addRunFeedback(userId, feedback.request_id, id, feedback.rpe, feedback.notes);
+    return Response.json({ run_id: id });
+  } catch (error) {
+    // The run itself is invalid (400): the app drops it instead of resending it forever.
+    if (error instanceof ClientError) return Response.json({ error: error.message }, { status: error.status });
+    throw error;
+  }
 });
