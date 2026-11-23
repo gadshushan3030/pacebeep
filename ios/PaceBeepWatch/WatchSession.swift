@@ -30,7 +30,29 @@ final class WatchSession: NSObject, HKWorkoutSessionDelegate, HKLiveWorkoutBuild
     private static let heartRateType = HKQuantityType(.heartRate)
     private static let distanceType = HKQuantityType(.distanceWalkingRunning)
 
-    func elapsed(at date: Date) -> TimeInterval { builder?.elapsedTime(at: date) ?? 0 }
+    func elapsed(at date: Date) -> TimeInterval {
+        #if DEBUG
+        if let demoStart { return date.timeIntervalSince(demoStart) }
+        #endif
+        return builder?.elapsedTime(at: date) ?? 0
+    }
+
+    #if DEBUG
+    /// App Store screenshots in the simulator, which has no heart rate: launch with
+    /// `-demoRun <elapsed seconds> <bpm>` to show a run in progress.
+    @ObservationIgnored private var demoStart: Date?
+
+    override init() {
+        super.init()
+        let args = ProcessInfo.processInfo.arguments
+        if let i = args.firstIndex(of: "-demoRun"), i + 2 < args.count,
+           let elapsed = Double(args[i + 1]), let bpm = Double(args[i + 2]) {
+            demoStart = Date(timeIntervalSinceNow: -elapsed)
+            heartRate = bpm
+            running = true
+        }
+    }
+    #endif
 
     func start(_ configuration: HKWorkoutConfiguration) {
         guard session == nil else { return }
