@@ -31,5 +31,7 @@ PaceBeep plays interval running workouts. Users plan them with their AI assistan
 
 Background audio (UIBackgroundModes audio): each workout is rendered into one audio track with the beeps at their exact times. The cues are what the runner listens to while running with the phone locked or in a pocket, so they must keep playing in the background. Audio plays only during a workout.
 
+Apple Watch and HealthKit: if a paired Apple Watch has PaceBeep installed, starting a workout on the iPhone starts a workout session on the Watch (HKWorkoutSession), which shows the elapsed time and heart rate. At the end, the average and maximum heart rate (for the run and each interval) and the distance are sent to our server with the run, so the runner's coach sees them, and the workout is saved in Health. PaceBeep reads no other Health data. The Watch app is optional; without a Watch the app works as before.
+
 Account deletion: Home → "Delete account" opens the account page on pacebeep.vercel.app, where "Delete my account" removes the account and all its data.
 ```
