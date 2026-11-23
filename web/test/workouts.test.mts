@@ -94,6 +94,15 @@ test("delete removes a planned workout; a workout with a run stays (409); gone i
   await assert.rejects(deleteWorkout(userId, done), (e) => e instanceof ClientError && e.status === 409);
 });
 
+test("location: indoor (treadmill) reaches the app's list; left out, it stays null (outdoor)", { skip }, async () => {
+  const indoor = (await createWorkout(userId, "loc1", { ...run, location: "indoor" }, "assistant")).id;
+  const outdoor = (await createWorkout(userId, "loc2", run, "assistant")).id;
+  const up = await upcomingWorkouts(userId, "2099-01-01", false);
+  assert.equal(up.find((x) => x.id === indoor)?.location, "indoor");
+  assert.equal(up.find((x) => x.id === outdoor)?.location, null);
+  assert.equal(workoutInput.safeParse({ ...run, location: "moon" }).success, false);
+});
+
 test("a run keeps the watch's heart rate, per run and per interval; max below avg is a 400", { skip }, async () => {
   const at = { source: "device" as const, started_at: "2099-01-06T18:00:00Z", ended_at: "2099-01-06T18:30:00Z" };
   const { id } = await recordRun(userId, "hr1", { ...at, distance_m: 5000, avg_hr: 148, max_hr: 171, intervals: [{ kind: "work", actual_sec: 60, avg_hr: 160, max_hr: 171 }] });

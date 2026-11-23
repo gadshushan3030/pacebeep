@@ -65,6 +65,8 @@ struct Workout: Identifiable {
     /// Planned by the coach and not yet approved by the runner (no reminder until then).
     var pending = false
     var done = false
+    /// The coach planned its runs on a treadmill: the Watch records them without GPS.
+    var indoor = false
 
     var id: String { serverId ?? name }
     /// Has parts that wait for a tap, so the total is only an estimate.

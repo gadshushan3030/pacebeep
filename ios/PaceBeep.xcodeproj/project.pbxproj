@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		7A0000000000000000000016 /* PaceBeepWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 7A0000000000000000000012 /* PaceBeepWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		7A000000000000000000002A /* PaceBeepWatch.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 7A0000000000000000000021 /* PaceBeepWatch.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -17,6 +18,13 @@
 			proxyType = 1;
 			remoteGlobalIDString = 7A000000000000000000001A;
 			remoteInfo = PaceBeepWidget;
+		};
+		7A000000000000000000002C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 7A0000000000000000000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 7A0000000000000000000023;
+			remoteInfo = PaceBeepWatch;
 		};
 /* End PBXContainerItemProxy section */
 
@@ -32,6 +40,17 @@
 			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		7A000000000000000000002B /* Embed Watch Content */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
+			dstSubfolderSpec = 16;
+			files = (
+				7A000000000000000000002A /* PaceBeepWatch.app in Embed Watch Content */,
+			);
+			name = "Embed Watch Content";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
@@ -40,6 +59,8 @@
 		7A0000000000000000000006 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		7A0000000000000000000012 /* PaceBeepWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = PaceBeepWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		7A0000000000000000000013 /* PaceBeepWidget-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "PaceBeepWidget-Info.plist"; sourceTree = "<group>"; };
+		7A0000000000000000000021 /* PaceBeepWatch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PaceBeepWatch.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		7A000000000000000000002E /* PaceBeepWatch-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "PaceBeepWatch-Info.plist"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -56,6 +77,11 @@
 		7A0000000000000000000015 /* Shared */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = Shared;
+			sourceTree = "<group>";
+		};
+		7A0000000000000000000022 /* PaceBeepWatch */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = PaceBeepWatch;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -75,6 +101,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		7A0000000000000000000025 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -83,10 +116,12 @@
 			children = (
 				7A0000000000000000000007 /* PaceBeep */,
 				7A0000000000000000000014 /* PaceBeepWidget */,
+				7A0000000000000000000022 /* PaceBeepWatch */,
 				7A0000000000000000000015 /* Shared */,
 				7A0000000000000000000005 /* Config.xcconfig */,
 				7A0000000000000000000006 /* Info.plist */,
 				7A0000000000000000000013 /* PaceBeepWidget-Info.plist */,
+				7A000000000000000000002E /* PaceBeepWatch-Info.plist */,
 				7A0000000000000000000003 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -96,6 +131,7 @@
 			children = (
 				7A0000000000000000000004 /* PaceBeep.app */,
 				7A0000000000000000000012 /* PaceBeepWidget.appex */,
+				7A0000000000000000000021 /* PaceBeepWatch.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -111,11 +147,13 @@
 				7A000000000000000000000A /* Frameworks */,
 				7A000000000000000000000B /* Resources */,
 				7A0000000000000000000017 /* Embed Foundation Extensions */,
+				7A000000000000000000002B /* Embed Watch Content */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 				7A0000000000000000000019 /* PBXTargetDependency */,
+				7A000000000000000000002D /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				7A0000000000000000000007 /* PaceBeep */,
@@ -147,6 +185,26 @@
 			productReference = 7A0000000000000000000012 /* PaceBeepWidget.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
+		7A0000000000000000000023 /* PaceBeepWatch */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 7A0000000000000000000027 /* Build configuration list for PBXNativeTarget "PaceBeepWatch" */;
+			buildPhases = (
+				7A0000000000000000000024 /* Sources */,
+				7A0000000000000000000025 /* Frameworks */,
+				7A0000000000000000000026 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				7A0000000000000000000022 /* PaceBeepWatch */,
+			);
+			name = PaceBeepWatch;
+			productName = PaceBeepWatch;
+			productReference = 7A0000000000000000000021 /* PaceBeepWatch.app */;
+			productType = "com.apple.product-type.application";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -161,6 +219,9 @@
 						CreatedOnToolsVersion = 26.0;
 					};
 					7A000000000000000000001A = {
+						CreatedOnToolsVersion = 27.0;
+					};
+					7A0000000000000000000023 = {
 						CreatedOnToolsVersion = 27.0;
 					};
 				};
@@ -181,6 +242,7 @@
 			targets = (
 				7A0000000000000000000008 /* PaceBeep */,
 				7A000000000000000000001A /* PaceBeepWidget */,
+				7A0000000000000000000023 /* PaceBeepWatch */,
 			);
 		};
 /* End PBXProject section */
@@ -194,6 +256,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		7A000000000000000000001D /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		7A0000000000000000000026 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -217,6 +286,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		7A0000000000000000000024 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -224,6 +300,11 @@
 			isa = PBXTargetDependency;
 			target = 7A000000000000000000001A /* PaceBeepWidget */;
 			targetProxy = 7A0000000000000000000018 /* PBXContainerItemProxy */;
+		};
+		7A000000000000000000002D /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 7A0000000000000000000023 /* PaceBeepWatch */;
+			targetProxy = 7A000000000000000000002C /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -274,6 +355,8 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = PaceBeep;
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "PaceBeep reads your heart rate and distance from your Apple Watch during a run, and sends them to your coach with the run.";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "PaceBeep saves your runs as workouts in Health.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -300,6 +383,8 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = PaceBeep;
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "PaceBeep reads your heart rate and distance from your Apple Watch during a run, and sends them to your coach with the run.";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "PaceBeep saves your runs as workouts in Health.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -361,6 +446,66 @@
 			};
 			name = Release;
 		};
+		7A0000000000000000000028 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 7A0000000000000000000005 /* Config.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = PaceBeepWatch/PaceBeepWatch.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 7;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "PaceBeepWatch-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = PaceBeep;
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "PaceBeep reads your heart rate and distance during a run, to show them on the Watch and send them to your coach with the run.";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "PaceBeep saves your runs as workouts in Health.";
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = "$(APP_BUNDLE_ID)";
+				INFOPLIST_KEY_WKRunsIndependentlyOfCompanionApp = NO;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0.2;
+				PRODUCT_BUNDLE_IDENTIFIER = "$(APP_BUNDLE_ID).watchkitapp";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 10.0;
+			};
+			name = Debug;
+		};
+		7A0000000000000000000029 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 7A0000000000000000000005 /* Config.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = PaceBeepWatch/PaceBeepWatch.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 7;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "PaceBeepWatch-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = PaceBeep;
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "PaceBeep reads your heart rate and distance during a run, to show them on the Watch and send them to your coach with the run.";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "PaceBeep saves your runs as workouts in Health.";
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = "$(APP_BUNDLE_ID)";
+				INFOPLIST_KEY_WKRunsIndependentlyOfCompanionApp = NO;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0.2;
+				PRODUCT_BUNDLE_IDENTIFIER = "$(APP_BUNDLE_ID).watchkitapp";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 10.0;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -387,6 +532,15 @@
 			buildConfigurations = (
 				7A000000000000000000001F /* Debug */,
 				7A0000000000000000000020 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		7A0000000000000000000027 /* Build configuration list for PBXNativeTarget "PaceBeepWatch" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				7A0000000000000000000028 /* Debug */,
+				7A0000000000000000000029 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

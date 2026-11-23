@@ -86,11 +86,18 @@ final class Runner {
     @ObservationIgnored private var pauses = 0
     @ObservationIgnored private var interrupted = false
     @ObservationIgnored private var recorded: Upload?
+    /// The recorded run waits (up to 10 s) for the Watch's heart rate before it is sent.
+    @ObservationIgnored private var waitingForWatch = false
+    /// When each segment began, to cut the Watch's heart rate into intervals.
+    @ObservationIgnored private var entered: [Int: Date] = [:]
     @ObservationIgnored private var activity: Activity<WorkoutActivity>?
     @ObservationIgnored private var shownSegment: Int?
     @ObservationIgnored private var activitySentAt = Date.distantPast
 
     init() {
+        WatchLink.shared.onStop = { [weak self] in
+            if self?.state == .running || self?.state == .paused { self?.stop() }
+        }
         // A phone call or Siri pauses the player; resume when iOS says so.
         NotificationCenter.default.addObserver(forName: AVAudioSession.interruptionNotification, object: nil, queue: .main) { [weak self] note in
             guard let self, let raw = note.userInfo?[AVAudioSessionInterruptionTypeKey] as? UInt else { return }
@@ -108,6 +115,8 @@ final class Runner {
     var current: Segment? { workout.flatMap { index < $0.segments.count ? $0.segments[index] : nil } }
 
     func start(_ w: Workout) {
+        if waitingForWatch, let recorded { onRun(recorded) }
+        waitingForWatch = false
         workout = w
         summary = nil
         rating = nil
@@ -115,6 +124,7 @@ final class Runner {
         error = nil
         logs = [:]
         spent = [:]
+        entered = [:]
         lastSet = nil
         prepared = nil
         index = 0
@@ -137,6 +147,8 @@ final class Runner {
         pauses = 0
         pausedTotal = 0
         latency = 0
+        // Not for runs shorter than recorded ones (the quick test): those would only clutter Fitness.
+        if w.total >= 300 { WatchLink.shared.start(w) }
         play(from: 0)
     }
 
@@ -173,6 +185,7 @@ final class Runner {
         starts = []
         trackClock = 0
         wait(since: lastSet.start)
+        entered = entered.filter { $0.key <= index }
         self.lastSet = nil
     }
 
@@ -287,6 +300,7 @@ final class Runner {
         if let s = current, s.waits { waited = Date().timeIntervalSince(waitStart) }
         if index != shownSegment {
             shownSegment = index
+            if entered[index] == nil { entered[index] = Date() }
             if index == workout.segments.count { endActivity() } else { updateActivity() }
         } else if index < workout.segments.count, Date().timeIntervalSince(activitySentAt) > 10 {
             // On a phone (not the simulator) an update sent with the screen off can be lost: the
@@ -352,6 +366,7 @@ final class Runner {
         if elapsed >= 300 {
             wrapUp(finished: false)
         } else {
+            WatchLink.shared.end(keep: false)
             workout = nil
             state = .idle
         }
@@ -366,10 +381,11 @@ final class Runner {
 
     /// The runner's RPE (1-10) for the run just recorded: the same run again, with feedback.
     func rate(_ rpe: Int) {
-        guard rating == nil, var run = recorded else { return }
-        run.feedback = Upload.Feedback(request_id: UUID().uuidString, rpe: rpe)
-        onRun(run)
+        guard rating == nil, recorded != nil else { return }
+        recorded?.feedback = Upload.Feedback(request_id: UUID().uuidString, rpe: rpe)
         rating = rpe
+        // Still waiting for the Watch: the run goes with the RPE in it.
+        if !waitingForWatch, let recorded { onRun(recorded) }
     }
 
     private func finish() {
@@ -402,6 +418,7 @@ final class Runner {
     private func record() -> Double {
         guard let workout else { return 0 }
         var intervals: [Upload.Interval] = []
+        var begins: [Date?] = []
         var counted = 0.0
         for (i, s) in workout.segments.enumerated() where i <= index {
             let seconds: Double
@@ -413,13 +430,17 @@ final class Runner {
                 continue
             }
             counted += seconds
+            begins.append(entered[i])
             let set = s.kind == .set ? log(i) : nil
             intervals.append(.init(
                 kind: s.kind == .ready ? "rest" : s.kind.rawValue, planned_sec: s.waits ? nil : Int(s.seconds), actual_sec: Int(seconds),
                 exercise: s.exercise, planned_reps: s.reps, reps: set?.reps, planned_weight_kg: s.weight, weight_kg: set?.weight
             ))
         }
-        guard elapsed >= 300 else { return counted }
+        guard elapsed >= 300 else {
+            WatchLink.shared.end(keep: false)
+            return counted
+        }
         let iso = ISO8601DateFormatter()
         let run = Upload(request_id: UUID().uuidString, run: .init(
             workout_id: workout.serverId,
@@ -427,8 +448,15 @@ final class Runner {
             ended_at: iso.string(from: Date()),
             intervals: intervals
         ))
-        onRun(run)
         recorded = run
+        waitingForWatch = true
+        WatchLink.shared.end(keep: true) { [weak self] stats in
+            guard let self, waitingForWatch, var run = recorded else { return }
+            if let stats { run.run.add(stats, starts: begins) }
+            recorded = run
+            waitingForWatch = false
+            onRun(run)
+        }
         return counted
     }
 
@@ -463,6 +491,7 @@ final class Runner {
     }
 
     private func fail(_ error: Error) {
+        WatchLink.shared.end(keep: false)
         self.error = "Couldn't start: \(error.localizedDescription)"
         timer?.invalidate()
         stopTrack()
