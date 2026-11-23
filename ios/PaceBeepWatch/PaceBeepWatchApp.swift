@@ -14,10 +14,6 @@ struct PaceBeepWatchApp: App {
 /// The phone starts a run with `startWatchApp(with:)`: watchOS launches this app and hands it the
 /// configuration here.
 final class AppDelegate: NSObject, WKApplicationDelegate {
-    func applicationDidFinishLaunching() {
-        _ = WatchSession.shared // activates WCSession, so the phone's "end" reaches it
-    }
-
     func handle(_ workoutConfiguration: HKWorkoutConfiguration) {
         WatchSession.shared.start(workoutConfiguration)
     }

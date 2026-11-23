@@ -9,6 +9,8 @@ struct PaceBeepApp: App {
     init() {
         // Before launch finishes, so a reminder tapped while the app was closed reaches it.
         UNUserNotificationCenter.current().delegate = Reminders.shared
+        // Sets HealthKit's handler for the Watch's mirrored session, which must be in place at launch.
+        _ = WatchLink.shared
     }
 
     var body: some Scene {

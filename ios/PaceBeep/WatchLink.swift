@@ -4,9 +4,11 @@ import WatchConnectivity
 /// The PaceBeep Watch app, seen from the phone: started with a run, ended with it, and its heart
 /// rate and distance brought back. The phone stays the beeper and the source of truth for segments,
 /// so the Watch sends its heart-rate readings with their times and the phone cuts them into
-/// intervals by its own segment times (no segment messages during the run). See WatchSession.swift
-/// for the messages.
-final class WatchLink: NSObject, WCSessionDelegate {
+/// intervals by its own segment times (no segment messages during the run).
+///
+/// The Watch mirrors its workout session here; both sides talk over it (see WatchSession.swift for
+/// the messages). WCSession only answers "is a Watch with the app there?".
+final class WatchLink: NSObject, HKWorkoutSessionDelegate, WCSessionDelegate {
     static let shared = WatchLink()
 
     /// What the Watch measured over the run.
@@ -31,8 +33,8 @@ final class WatchLink: NSObject, WCSessionDelegate {
     private let store = HKHealthStore()
     /// The Watch app was asked to start a session with this run.
     private var launched = false
-    /// The Watch said its workout session started.
-    private var running = false
+    /// The Watch's session, mirrored here once it started.
+    private var mirror: HKWorkoutSession?
     private var stats: Stats?
     private var waiting: ((Stats?) -> Void)?
 
@@ -42,6 +44,16 @@ final class WatchLink: NSObject, WCSessionDelegate {
             WCSession.default.delegate = self
             WCSession.default.activate()
         }
+        // Set at launch, as HealthKit asks: the Watch's session may arrive any time after.
+        store.workoutSessionMirroringStartHandler = { [weak self] session in
+            DispatchQueue.main.async {
+                guard let self else { return }
+                session.delegate = self
+                self.mirror = session
+                // The run already ended (or was never this one's): close the Watch's session now.
+                if !self.launched { self.send(["end": false], to: session) }
+            }
+        }
     }
 
     /// Opens the Watch app on a workout session, if a Watch with the app is paired. Recorded as a
@@ -49,7 +61,6 @@ final class WatchLink: NSObject, WCSessionDelegate {
     /// run as the coach planned it, or strength only.
     func start(_ w: Workout) {
         launched = false
-        running = false
         stats = nil
         waiting = nil
         let s = WCSession.default
@@ -72,9 +83,10 @@ final class WatchLink: NSObject, WCSessionDelegate {
     func end(keep: Bool, done: @escaping (Stats?) -> Void = { _ in }) {
         guard launched else { return done(nil) }
         launched = false
-        send(["end": keep])
-        guard keep, running else { return done(nil) }
-        running = false
+        // No mirror yet: the Watch's session (if it starts at all) is closed when it shows up.
+        guard let mirror else { return done(nil) }
+        send(["end": keep], to: mirror)
+        guard keep else { return done(nil) }
         if let stats { return done(stats) }
         waiting = done
         DispatchQueue.main.asyncAfter(deadline: .now() + 10) { [weak self] in self?.deliver(nil) }
@@ -86,33 +98,45 @@ final class WatchLink: NSObject, WCSessionDelegate {
         done?(stats)
     }
 
-    private func send(_ message: [String: Any]) {
-        let s = WCSession.default
-        guard s.activationState == .activated else { return }
-        if s.isReachable {
-            s.sendMessage(message, replyHandler: nil) { _ in s.transferUserInfo(message) }
-        } else {
-            s.transferUserInfo(message)
+    /// If the message can't reach the Watch, its session is ended from here: the workout is kept,
+    /// but the Watch stops (and its stats come back the same way).
+    private func send(_ message: [String: Any], to session: HKWorkoutSession) {
+        guard let data = try? JSONSerialization.data(withJSONObject: message) else { return }
+        Task {
+            do { try await session.sendToRemoteWorkoutSession(data: data) } catch { session.end() }
         }
     }
 
-    private func received(_ message: [String: Any]) {
+    // MARK: HKWorkoutSessionDelegate (the mirror)
+
+    func workoutSession(_ workoutSession: HKWorkoutSession, didReceiveDataFromRemoteWorkoutSession data: [Data]) {
+        let messages = data.compactMap { try? JSONSerialization.jsonObject(with: $0) as? [String: Any] }
         DispatchQueue.main.async { [self] in
-            if message["started"] as? Bool == true { running = true }
-            if message["stop"] as? Bool == true { onStop() }
-            if let m = message["stats"] as? [String: Any] {
-                let times = m["t"] as? [Double] ?? [], bpm = m["bpm"] as? [Double] ?? []
-                let s = Stats(avg: m["avg"] as? Double, max: m["max"] as? Double, distance: m["distance"] as? Double,
-                              readings: zip(times, bpm).map { (Date(timeIntervalSince1970: $0), $1) })
-                stats = s
-                deliver(s)
+            for message in messages {
+                if message["stop"] as? Bool == true { onStop() }
+                if let m = message["stats"] as? [String: Any] {
+                    let times = m["t"] as? [Double] ?? [], bpm = m["bpm"] as? [Double] ?? []
+                    let s = Stats(avg: m["avg"] as? Double, max: m["max"] as? Double, distance: m["distance"] as? Double,
+                                  readings: zip(times, bpm).map { (Date(timeIntervalSince1970: $0), $1) })
+                    stats = s
+                    deliver(s)
+                }
             }
         }
     }
 
+    func workoutSession(_ workoutSession: HKWorkoutSession, didChangeTo toState: HKWorkoutSessionState, from fromState: HKWorkoutSessionState, date: Date) {
+        guard toState == .ended else { return }
+        DispatchQueue.main.async { [self] in
+            if mirror === workoutSession { mirror = nil }
+        }
+    }
+
+    func workoutSession(_ workoutSession: HKWorkoutSession, didFailWithError error: Error) {}
+
+    // MARK: WCSessionDelegate
+
     func session(_ session: WCSession, activationDidCompleteWith activationState: WCSessionActivationState, error: Error?) {}
     func sessionDidBecomeInactive(_ session: WCSession) {}
     func sessionDidDeactivate(_ session: WCSession) { session.activate() }
-    func session(_ session: WCSession, didReceiveMessage message: [String: Any]) { received(message) }
-    func session(_ session: WCSession, didReceiveUserInfo userInfo: [String: Any] = [:]) { received(userInfo) }
 }
