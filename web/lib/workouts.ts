@@ -1,5 +1,6 @@
+import { createHash } from "node:crypto";
 import * as z from "zod/v4";
-import { sql } from "@/lib/db";
+import { sql, today } from "@/lib/db";
 
 // Shared by the web UI (server actions) and the MCP tools. Every function takes the
 // caller's user id and never touches another user's rows.
@@ -132,10 +133,12 @@ async function assertOwned(table: "workouts" | "runs", userId: string, id: strin
   if (!row) throw new Error(`${table === "workouts" ? "workout" : "run"} not found`);
 }
 
+// A workout is one kind: blocks (a full workout), or repeats and work_sec (an interval run).
+const oneKind = (w: WorkoutInput) => !w.blocks !== (w.repeats == null || w.work_sec == null);
+const oneKindMessage = "give either blocks (a full workout) or repeats and work_sec (an interval run)";
+
 export function createWorkout(userId: string, requestId: string, input: WorkoutInput, source: "app" | "assistant") {
-  if (!input.blocks === (input.repeats == null || input.work_sec == null)) {
-    throw new Error("give either blocks (a full workout) or repeats and work_sec (an interval run)");
-  }
+  if (!oneKind(input)) throw new Error(oneKindMessage);
   // pg sends a JS array as a Postgres array, not JSON. The coach's workouts wait for the runner's
   // approval in the app; the runner's own are approved as they are.
   const status = source === "assistant" ? "pending" : "approved";
@@ -156,6 +159,70 @@ const starterWorkouts: WorkoutInput[] = [
 
 export async function addStarterWorkouts(userId: string) {
   for (const [i, workout] of starterWorkouts.entries()) await createWorkout(userId, `starter-${i}`, workout, "app");
+}
+
+// The shape of a plan and its limits, as told to a chat (planPrompt) and to the reader of a coach
+// link (lib/coach-link.ts). The example is one line on purpose: an assistant copies its style, and
+// a 27-workout plan written this way fits in one or two chat messages.
+export const planShape = (today: string) => `[{"name":"W1 D1 · Run 1:00 / Walk 1:30","scheduled_for":"${today}","warmup_sec":300,"repeats":8,"work_sec":60,"rest_sec":90,"cooldown_sec":300,"notes":"Easy pace: you should be able to talk."}]
+
+Rules:
+- Every workout is: warmup, then repeats × (work, then rest), then cooldown. All times are whole seconds.
+- Run-walk: work is the run, rest is the walk. A steady run is "repeats": 1 with "rest_sec": 0.
+- Limits: repeats 1-50, work_sec 5-3600, rest_sec 0-3600, warmup_sec and cooldown_sec 0-7200. At most 60 workouts.
+- name: short, at most 100 characters. notes: optional, at most 1000 characters.
+- scheduled_for: the day, YYYY-MM-DD, today or later. Give one to every workout. Optional "scheduled_time": "HH:MM" for a reminder at that time.
+- Optional: "target_pace_sec_per_km" (120-1200), and "location": "indoor" for a treadmill.
+- Plain JSON only: no comments, no trailing commas. Compact is best; line breaks do not matter.`;
+
+// A plan without MCP: the runner gives this prompt to any chat, and pastes the answer into the app
+// or the dashboard (importPlan). It lives on the server so it can improve without an app release.
+const promptStart = "You are writing a training plan for PaceBeep";
+export const planPrompt = (today: string) => `${promptStart}, an iPhone interval timer that beeps at every change.
+Today is ${today}. If I haven't told you my goal yet, first ask me: my goal, how many days a week, which weekdays, and when to start.
+
+Then answer with ONE JSON code block: a list of workouts in exactly this shape.
+
+${planShape(today)}
+
+I will copy the code block and paste it into PaceBeep.`;
+
+const planInput = z.array(workoutInput.refine(oneKind, oneKindMessage)).min(1).max(60);
+
+// What the chat answered, as the runner copied it: a JSON list of workouts (or { workouts: [...] },
+// or one workout), with or without the chat's words and code fence around it.
+export function parsePlan(text: string) {
+  // The prompt's own example would pass as a one-workout plan (Copy, then Paste, without a chat in between).
+  if (text.includes(promptStart)) throw new ClientError("That is the prompt itself. Send it to a chat, then copy only the chat's answer and paste it.", 400);
+  let data: unknown;
+  try {
+    data = JSON.parse(text.slice(text.search(/[[{]/), Math.max(text.lastIndexOf("]"), text.lastIndexOf("}")) + 1));
+  } catch {
+    throw new ClientError("No plan found. Copy the whole code block your chat wrote and paste it again.", 400);
+  }
+  const parsed = planInput.safeParse(Array.isArray(data) ? data : ((data as { workouts?: unknown }).workouts ?? [data]));
+  // Readable by the runner, and by the chat when they paste it back to have the plan fixed.
+  if (!parsed.success) throw new ClientError(z.prettifyError(parsed.error), 400);
+  return parsed.data;
+}
+
+// Stores a plan. Pasted by the runner ("app") it is approved: they chose it themselves. Sent over a
+// coach link ("assistant") it waits for their approval, like any coach's. Each request id comes
+// from that workout's content, so a workout sent twice (a double tap, a retry, a plan re-sent with
+// one week changed) is stored once. `past`: dated before today, so the app will not show them.
+// `first`: a workout this call created, for the push to the runner's phone.
+export async function importPlan(userId: string, text: string, source: "app" | "assistant" = "app") {
+  const plan = parsePlan(text);
+  let created = 0;
+  let first: string | undefined;
+  for (const workout of plan) {
+    const key = createHash("sha256").update(JSON.stringify(workout)).digest("hex").slice(0, 24);
+    const w = await createWorkout(userId, `plan-${key}`, workout, source);
+    if (w.created) first ??= w.id;
+    created += Number(w.created);
+  }
+  const day = today();
+  return { workouts: plan.length, created, past: plan.filter((w) => w.scheduled_for && w.scheduled_for < day).length, first };
 }
 
 // Returns the id and the columns whose value actually changed. A change by the coach ("assistant")
@@ -239,7 +306,7 @@ export function listWorkouts(userId: string, limit = 50) {
 // runs, and one workout without `repeats` would empty it.
 export function upcomingWorkouts(userId: string, fromDate: string, withBlocks: boolean, limit = 30) {
   return sql<Workout & { done: boolean }>(
-    `select w.id, w.name, w.notes, w.warmup_sec, w.repeats, w.work_sec, w.rest_sec, w.cooldown_sec,
+    `select w.id, w.source, w.name, w.notes, w.warmup_sec, w.repeats, w.work_sec, w.rest_sec, w.cooldown_sec,
             w.target_pace_sec_per_km, w.blocks, w.location, w.scheduled_for, w.scheduled_time, w.status,
             exists (select 1 from runs r where r.workout_id = w.id) as done
      from workouts w where w.user_id = $1 and (w.scheduled_for >= $2 or w.scheduled_for is null)

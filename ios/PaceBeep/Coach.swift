@@ -119,6 +119,46 @@ final class Coach {
         Task { await flush() }
     }
 
+    /// A coach link for an assistant with no connector, inside the sentence to send it with: the
+    /// runner pastes it into their chat. A new link each time; earlier ones keep working until
+    /// disconnected on the web dashboard. nil without a connection.
+    func coachInvite() async -> String? {
+        var r = URLRequest(url: Auth.server.appending(path: "api/coach-links"))
+        r.httpMethod = "POST"
+        guard let (data, http) = try? await auth.send(r), http.statusCode == 200 else { return nil }
+        return (try? JSONDecoder().decode([String: String].self, from: data))?["invite"]
+    }
+
+    /// The text to give any chat so that it answers with a plan this app can read. From the server,
+    /// so it can improve without an app release; nil without a connection.
+    func planPrompt() async -> String? {
+        let url = Auth.server.appending(path: "api/workouts/import")
+            .appending(queryItems: [.init(name: "today", value: dayFormat("yyyy-MM-dd").string(from: Date()))])
+        guard let (data, http) = try? await auth.send(URLRequest(url: url)), http.statusCode == 200 else { return nil }
+        return (try? JSONDecoder().decode([String: String].self, from: data))?["prompt"]
+    }
+
+    /// A plan pasted from a chat (its answer to planPrompt). The server reads and stores it, and
+    /// the same text again adds nothing. Returns whether it went in and what to tell the runner.
+    func importPlan(_ text: String) async -> (ok: Bool, message: String) {
+        struct Answer: Decodable {
+            let workouts: Int?
+            let created: Int?
+            let error: String?
+        }
+        var r = URLRequest(url: Auth.server.appending(path: "api/workouts/import"))
+        r.httpMethod = "POST"
+        r.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        r.httpBody = try? JSONEncoder().encode(["text": text])
+        guard let (data, http) = try? await auth.send(r) else { return (false, "No connection. Try again.") }
+        let answer = try? JSONDecoder().decode(Answer.self, from: data)
+        guard http.statusCode == 200, let created = answer?.created, let total = answer?.workouts else {
+            return (false, answer?.error ?? "The server couldn't read it. Try again.")
+        }
+        await sync()
+        return (true, created > 0 ? "Added \(created) workout\(created == 1 ? "" : "s")." : "Already added: \(total) workout\(total == 1 ? "" : "s").")
+    }
+
     /// "Remind me" in the offer: the system prompt, then the reminders (denied: none, quietly),
     /// and the device token for the coach's push.
     func enableReminders() async {

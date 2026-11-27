@@ -21,7 +21,7 @@ export default function Privacy() {
         <li><strong>Sign-in sessions:</strong> a session cookie, and the IP address and browser/device description of each session.</li>
         <li><strong>Training data you or your assistant add:</strong> workout plans, runs (times, distance, per-interval durations and pace), and your feedback (effort rating and notes).</li>
         <li><strong>Apple Watch metrics:</strong> if you run with the PaceBeep Watch app, your heart rate (average and maximum, for the run and for each interval) and the distance, measured by the Watch, are sent to the server with the run. The Watch app records the workout in Apple Health on your device; PaceBeep reads nothing else from Health and sends no individual heart-rate readings or GPS route.</li>
-        <li><strong>Assistant connections:</strong> which AI assistants you approved, when, and the access and refresh tokens issued to them.</li>
+        <li><strong>Assistant connections:</strong> which AI assistants you approved, when, and the access and refresh tokens issued to them; and the coach links you made (a hash of each link, when it was made and last opened).</li>
       </ul>
       <p>We do not use advertising, tracking or analytics cookies, and we do not collect location data from your device. The only health data we collect is the Watch heart rate and distance described above, and only if you use the Watch app.</p>
 
@@ -50,10 +50,16 @@ export default function Privacy() {
       </p>
       <h2>AI assistants you connect</h2>
       <p>
-        If you connect an assistant (for example ChatGPT), you approve it on a consent screen, and it can then read and change your
+        If you connect an assistant, you approve it on a consent screen, and it can then read and change your
         PaceBeep training data through PaceBeep&rsquo;s MCP interface. What the assistant&rsquo;s provider does with that data is
         governed by the provider&rsquo;s own terms and privacy policy. You can disconnect an assistant at any time from the dashboard;
         its access ends immediately.
+      </p>
+      <p>
+        A coach link is a second way to connect an assistant, for one that cannot use MCP. You make the link and send it yourself.
+        There is no consent screen: whoever has the link can read your training data (runs, heart rate, effort ratings, planned
+        workouts) and add or remove planned workouts, so send it only to your assistant. Disconnect the link on the dashboard and it
+        stops working immediately.
       </p>
 
       <h2>Who else handles the data</h2>
@@ -75,7 +81,7 @@ export default function Privacy() {
       <h2>Security</h2>
       <p>
         Connections use HTTPS. Every request is checked against the signed-in user or the assistant token, so one user cannot read
-        another user&rsquo;s data. Assistants never receive your password or a long-term key, only tokens you approved and can revoke.
+        another user&rsquo;s data. Assistants never receive your password: only tokens you approved, or a coach link you made, and you can revoke either.
       </p>
 
       <h2>Children</h2>

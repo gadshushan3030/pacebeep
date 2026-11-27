@@ -1,7 +1,9 @@
 import { acceptWorkout, removeWorkout } from "@/app/actions";
+import { today } from "@/lib/db";
 import { requireUser } from "@/lib/session";
-import { describeBlock, describeWorkout, fmtDuration, listWorkouts } from "@/lib/workouts";
+import { describeBlock, describeWorkout, fmtDuration, listWorkouts, planPrompt } from "@/lib/workouts";
 import { NewWorkoutForm } from "./NewWorkoutForm";
+import { PastePlanForm } from "./PastePlanForm";
 
 export default async function WorkoutsPage() {
   const user = await requireUser();
@@ -11,6 +13,7 @@ export default async function WorkoutsPage() {
     <>
       <h1 className="display text-[52px] [font-stretch:70%]">Workouts</h1>
       <NewWorkoutForm />
+      <PastePlanForm prompt={planPrompt(today())} />
       <ul className="surface divide-y divide-[var(--border)]">
         {workouts.map((w) => (
           <li key={w.id} className="flex items-center gap-3 px-4 py-3">

@@ -4,9 +4,10 @@ import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
+import { coachInvite, createCoachLink, revokeCoachLink } from "@/lib/coach-link";
 import { pool } from "@/lib/db";
 import { requireUser } from "@/lib/session";
-import { approveWorkout, ClientError, createWorkout, deleteWorkout, workoutInput } from "@/lib/workouts";
+import { approveWorkout, ClientError, createWorkout, deleteWorkout, importPlan, workoutInput } from "@/lib/workouts";
 
 export async function logout() {
   await auth.api.signOut({ headers: await headers() });
@@ -41,6 +42,25 @@ export async function addWorkout(_prev: string | null, form: FormData) {
   return null;
 }
 
+// A plan pasted from any chat (the answer to planPrompt). Same text again adds nothing.
+export async function pastePlan(_prev: { ok: boolean; message: string } | null, form: FormData) {
+  const user = await requireUser();
+  try {
+    const { workouts, created, past } = await importPlan(user.id, String(form.get("text") ?? ""));
+    revalidatePath("/", "layout");
+    return {
+      ok: true,
+      message:
+        (created ? `Added ${created} workout${created === 1 ? "" : "s"}.` : `Already added: ${workouts} workout${workouts === 1 ? "" : "s"}.`) +
+        // Otherwise "Added 27 workouts" next to an empty app.
+        (past ? ` ${past} dated before today will not show in the app.` : ""),
+    };
+  } catch (error) {
+    if (error instanceof ClientError) return { ok: false, message: error.message };
+    throw error;
+  }
+}
+
 export async function acceptWorkout(workoutId: string) {
   const user = await requireUser();
   // Deleted in another tab meanwhile: nothing to approve, the list just refreshes.
@@ -57,8 +77,23 @@ export async function removeWorkout(workoutId: string) {
   revalidatePath("/", "layout");
 }
 
+// A coach link for an assistant with no connector, with the sentence to send it in. Only the
+// link's hash is stored, so this answer is the one time it can be shown.
+export async function newCoachLink() {
+  const user = await requireUser();
+  const url = await createCoachLink(user.id);
+  revalidatePath("/");
+  return { url, invite: coachInvite(url) };
+}
+
+export async function removeCoachLink(id: string) {
+  const user = await requireUser();
+  await revokeCoachLink(user.id, id);
+  revalidatePath("/");
+}
+
 // Disconnects an assistant for this user only. A client can be shared by many users
-// (e.g. one ChatGPT client_id), so the client row stays; this user's consent and tokens go.
+// (e.g. one assistant's client_id), so the client row stays; this user's consent and tokens go.
 // /mcp then rejects this user's still-valid access tokens (no consent → 401).
 export async function revokeConnection(clientId: string) {
   const user = await requireUser();
