@@ -132,7 +132,7 @@ export default async function Dashboard() {
                 <span className="flex min-w-0 flex-1 flex-col gap-0.5">
                   <span className="text-[17px] font-bold">Coach link</span>
                   <span className="muted text-[13px]">
-                    Reads your training, plans workouts · made {fmtDate(l.created_at)} · {l.last_used_at ? `last opened ${fmtDate(l.last_used_at)}` : "not opened yet"}
+                    Reads your training, plans workouts · made {fmtDate(l.created_at)} · {l.last_used_at ? `last used ${fmtDate(l.last_used_at)}` : "not used yet"} · ends {fmtDate(l.ends_at)} unless used
                   </span>
                 </span>
                 <form action={removeCoachLink.bind(null, l.id)}>

@@ -23,7 +23,8 @@ export function NewCoachLink() {
         <>
           <input readOnly value={link.url} aria-label="Coach link" className="input font-mono text-sm" onFocus={(e) => e.target.select()} />
           <p className="muted text-sm">
-            Shown once. Anyone who has this link can read your training and plan workouts, so send it only to your assistant. Disconnect it above at any time.
+            Shown once. Anyone who has this link can read your training and plan workouts, so send it only to your assistant. It ends after
+            30 days without use; disconnect it above at any time.
           </p>
         </>
       )}

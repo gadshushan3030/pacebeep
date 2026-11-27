@@ -58,8 +58,9 @@ export default function Privacy() {
       <p>
         A coach link is a second way to connect an assistant, for one that cannot use MCP. You make the link and send it yourself.
         There is no consent screen: whoever has the link can read your training data (runs, heart rate, effort ratings, planned
-        workouts) and add or remove planned workouts, so send it only to your assistant. Disconnect the link on the dashboard and it
-        stops working immediately.
+        workouts) and add or remove planned workouts, so send it only to your assistant. The address you paste shows none of your
+        training by itself, so an app that only previews the link receives none; the training is one step further, where your assistant
+        reads it. A link stops working after 30 days without use, and immediately when you disconnect it on the dashboard.
       </p>
 
       <h2>Who else handles the data</h2>

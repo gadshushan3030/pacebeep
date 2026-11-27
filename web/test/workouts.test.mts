@@ -3,7 +3,7 @@
 import assert from "node:assert/strict";
 import { after, before, test } from "node:test";
 import { pool, sql } from "@/lib/db";
-import { approveWorkout, ClientError, createWorkout, deleteWorkout, getRun, getWorkout, importPlan, parsePlan, planPrompt, recordRun, summary, updateWorkout, upcomingWorkouts, workoutInput, type WorkoutInput } from "@/lib/workouts";
+import { approveWorkout, ClientError, createWorkout, deleteWorkout, deleteWorkouts, getRun, getWorkout, importPlan, parsePlan, planPrompt, recordRun, summary, updateWorkout, upcomingWorkouts, workoutInput, type WorkoutInput } from "@/lib/workouts";
 
 const skip = !process.env.DATABASE_URL && "DATABASE_URL unset";
 const userId = `test-${Date.now()}`;
@@ -137,11 +137,26 @@ test("a pasted plan is read from a chat's answer: fenced, wrapped, or one workou
 
 test("importing a plan stores it approved, once: the same text again creates nothing", { skip }, async () => {
   const text = JSON.stringify(plan);
-  const counts = async (t: string) => { const r = await importPlan(userId, t); return [r.workouts, r.created, r.past]; };
+  const counts = async (t: string) => { const r = await importPlan(userId, t); return [r.workouts, r.created.length, r.past]; };
   assert.deepEqual(await counts(text), [2, 2, 0]);
   assert.deepEqual(await counts("```\n" + text + "\n```"), [2, 0, 0]);
   const up = (await upcomingWorkouts(userId, "2099-02-01", false)).filter((w) => w.name.startsWith("W1 "));
   assert.deepEqual(up.map((w) => [w.name, w.status, w.scheduled_for]), [["W1 D1", "approved", "2099-02-01"], ["W1 D2", "approved", "2099-02-03"]]);
-  // One week rewritten and sent with the rest: only the new workout is added.
-  assert.deepEqual(await counts(JSON.stringify([plan[0], { ...plan[1], name: "W1 D2 easier", work_sec: 600 }])), [2, 1, 0]);
+  // One week rewritten and sent with the rest: only the new workout is added, and the workout it
+  // was meant to replace is named as left over from the earlier plan.
+  const second = await importPlan(userId, JSON.stringify([plan[0], { ...plan[1], name: "W1 D2 easier", work_sec: 600 }]));
+  assert.deepEqual([second.workouts, second.created.length, second.past], [2, 1, 0]);
+  const names = async (ids: string[]) => (await upcomingWorkouts(userId, "2099-02-01", false)).filter((w) => ids.includes(w.id)).map((w) => w.name);
+  assert.deepEqual(await names(second.earlier), ["W1 D2"]);
+  // "Remove the earlier plan", then Undo: each takes exactly its own workouts.
+  assert.equal(await deleteWorkouts(userId, second.earlier), 1);
+  assert.equal(await deleteWorkouts(userId, second.created), 1);
+  assert.deepEqual((await upcomingWorkouts(userId, "2099-02-01", false)).filter((w) => w.name.startsWith("W1 ")).map((w) => w.name), ["W1 D1"]);
+});
+
+test("a pasted plan dated in the past is refused; past workouts in a mixed plan are left out", { skip }, async () => {
+  const old = { ...plan[0], name: "W0 old", scheduled_for: "2001-01-01" };
+  await assert.rejects(importPlan(userId, JSON.stringify([old])), (e) => e instanceof ClientError && e.status === 400 && e.message.includes("dated before today"));
+  const mixed = await importPlan(userId, JSON.stringify([old, { ...plan[0], name: "W9 new", scheduled_for: "2099-04-01" }]));
+  assert.deepEqual([mixed.workouts, mixed.created.length, mixed.past], [1, 1, 1]);
 });

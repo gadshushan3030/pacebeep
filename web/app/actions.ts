@@ -7,7 +7,7 @@ import { auth } from "@/lib/auth";
 import { coachInvite, createCoachLink, revokeCoachLink } from "@/lib/coach-link";
 import { pool } from "@/lib/db";
 import { requireUser } from "@/lib/session";
-import { approveWorkout, ClientError, createWorkout, deleteWorkout, importPlan, workoutInput } from "@/lib/workouts";
+import { approveWorkout, ClientError, createWorkout, deleteWorkout, deleteWorkouts, importPlan, workoutInput } from "@/lib/workouts";
 
 export async function logout() {
   await auth.api.signOut({ headers: await headers() });
@@ -43,22 +43,30 @@ export async function addWorkout(_prev: string | null, form: FormData) {
 }
 
 // A plan pasted from any chat (the answer to planPrompt). Same text again adds nothing.
-export async function pastePlan(_prev: { ok: boolean; message: string } | null, form: FormData) {
+export async function pastePlan(_prev: { ok: boolean; message: string; created: string[]; earlier: string[] } | null, form: FormData) {
   const user = await requireUser();
   try {
-    const { workouts, created, past } = await importPlan(user.id, String(form.get("text") ?? ""));
+    const { workouts, created, past, earlier } = await importPlan(user.id, String(form.get("text") ?? ""));
     revalidatePath("/", "layout");
+    const n = created.length;
     return {
       ok: true,
-      message:
-        (created ? `Added ${created} workout${created === 1 ? "" : "s"}.` : `Already added: ${workouts} workout${workouts === 1 ? "" : "s"}.`) +
-        // Otherwise "Added 27 workouts" next to an empty app.
-        (past ? ` ${past} dated before today will not show in the app.` : ""),
+      message: (n ? `Added ${n} workout${n === 1 ? "" : "s"}.` : `Already added: ${workouts} workout${workouts === 1 ? "" : "s"}.`) + (past ? ` ${past} dated before today left out.` : ""),
+      created,
+      earlier,
     };
   } catch (error) {
-    if (error instanceof ClientError) return { ok: false, message: error.message };
+    if (error instanceof ClientError) return { ok: false, message: error.message, created: [], earlier: [] };
     throw error;
   }
+}
+
+// Undo of a pasted plan, or dropping the plan pasted before it. Returns how many went.
+export async function removeWorkouts(ids: string[]) {
+  const user = await requireUser();
+  const removed = await deleteWorkouts(user.id, ids);
+  revalidatePath("/", "layout");
+  return removed;
 }
 
 export async function acceptWorkout(workoutId: string) {

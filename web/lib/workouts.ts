@@ -209,20 +209,46 @@ export function parsePlan(text: string) {
 // Stores a plan. Pasted by the runner ("app") it is approved: they chose it themselves. Sent over a
 // coach link ("assistant") it waits for their approval, like any coach's. Each request id comes
 // from that workout's content, so a workout sent twice (a double tap, a retry, a plan re-sent with
-// one week changed) is stored once. `past`: dated before today, so the app will not show them.
-// `first`: a workout this call created, for the push to the runner's phone.
+// one week changed) is stored once.
+// - Workouts dated before today are left out (`past` counts them) and a plan with nothing else is
+//   refused: stored, they would show nowhere in the app, next to "Added 27 workouts".
+// - `created`: the ids this call stored, which is what Undo removes.
+// - `earlier`: workouts from a plan pasted before that are still ahead and not run. Next to a new
+//   plan they are usually leftovers ("make week 3 easier"), and the runner can drop them in one go.
 export async function importPlan(userId: string, text: string, source: "app" | "assistant" = "app") {
-  const plan = parsePlan(text);
-  let created = 0;
-  let first: string | undefined;
+  const all = parsePlan(text);
+  // Yesterday still passes: the server's day is Israel's, and a runner west of it is a day behind.
+  const from = today(new Date(Date.now() - 86_400_000));
+  const plan = all.filter((w) => !w.scheduled_for || w.scheduled_for >= from);
+  if (!plan.length) throw new ClientError(`Every workout in this plan is dated before today (${today()}). Ask for the plan again, starting today or later.`, 400);
+  const ids: string[] = [];
+  const created: string[] = [];
   for (const workout of plan) {
     const key = createHash("sha256").update(JSON.stringify(workout)).digest("hex").slice(0, 24);
     const w = await createWorkout(userId, `plan-${key}`, workout, source);
-    if (w.created) first ??= w.id;
-    created += Number(w.created);
+    ids.push(w.id);
+    if (w.created) created.push(w.id);
   }
-  const day = today();
-  return { workouts: plan.length, created, past: plan.filter((w) => w.scheduled_for && w.scheduled_for < day).length, first };
+  const earlier =
+    source === "app" && created.length
+      ? await sql<{ id: string }>(
+          `select id from workouts w where user_id = $1 and source = 'app' and request_id like 'plan-%'
+             and (scheduled_for >= $2 or scheduled_for is null) and id <> all($3::uuid[])
+             and not exists (select 1 from runs where workout_id = w.id)`,
+          [userId, from, ids],
+        )
+      : [];
+  return { workouts: plan.length, past: all.length - plan.length, created, earlier: earlier.map((w) => w.id) };
+}
+
+// Undo of a pasted plan, or dropping an earlier one: each workout as a single delete would, so one
+// with a run stays. Returns how many went.
+export async function deleteWorkouts(userId: string, ids: string[]) {
+  let removed = 0;
+  for (const id of ids) {
+    removed += await deleteWorkout(userId, id).then(() => 1, (e) => { if (e instanceof ClientError) return 0; throw e; });
+  }
+  return removed;
 }
 
 // Returns the id and the columns whose value actually changed. A change by the coach ("assistant")

@@ -1,9 +1,13 @@
-import { coachBrief, coachLinkUser, coachWrite } from "@/lib/coach-link";
+import { coachBrief, coachCover, coachLinkUser, coachPlanned, coachWrite } from "@/lib/coach-link";
 import { ClientError } from "@/lib/workouts";
 
-// A coach link, for an assistant with no connector. It reads this page and sends workouts back in
-// whichever way its tools allow: a POST, the form at the bottom (a browser), or GET ?add= (a tool
-// that can only fetch a page). No session and no bearer token: the token in the path is the key.
+// A coach link, for an assistant with no connector. No session and no bearer token: the token in
+// the path is the key.
+// - GET /c/<token>: what this is and where the training is, with no training in it. This is the
+//   address the runner pastes, so it is what a chat app fetches to draw a link preview.
+// - GET /c/<token>?training: the runs, the plan, and how to plan more.
+// - Workouts come back in whichever way the reader's tools allow: a POST, the form at the bottom
+//   of the training page (a browser), or GET ?add= (a tool that can only fetch a page).
 //
 // The outcome is the first line of the answer ("Added 3 workouts." or "Not done: ..."). A GET that
 // reaches a real link always answers 200: a page-fetching tool often hides the body of an error
@@ -22,12 +26,10 @@ const page = (text: string, form: boolean) => `<!doctype html>
 `;
 
 async function handle(request: Request, ctx: RouteContext<"/c/[token]">) {
-  const userId = await coachLinkUser((await ctx.params).token);
-  // A browser gets the same text with a form under it.
+  // A browser gets the same text, with a form under it wherever workouts can be added.
   const html = (request.headers.get("accept") ?? "").includes("text/html");
-  const answer = (text: string, status = 200) =>
-    new Response(html ? page(text, status !== 404) : text, { status, headers: { ...headers, "Content-Type": `text/${html ? "html" : "plain"}; charset=utf-8` } });
-  if (!userId) return answer("This PaceBeep coach link no longer works. Ask the runner for a new one: in the PaceBeep app, Connect an assistant.\n", 404);
+  const answer = (text: string, status = 200, form = false) =>
+    new Response(html ? page(text, form) : text, { status, headers: { ...headers, "Content-Type": `text/${html ? "html" : "plain"}; charset=utf-8` } });
 
   const url = new URL(request.url);
   let add = url.searchParams.get("add");
@@ -48,18 +50,25 @@ async function handle(request: Request, ctx: RouteContext<"/c/[token]">) {
     }
   }
 
-  let outcome = "";
-  let status = 200;
-  if (add || remove) {
-    try {
-      outcome = await coachWrite(userId, { add, remove });
-    } catch (error) {
-      if (!(error instanceof ClientError)) throw error;
-      outcome = `Not done: ${error.message}`;
-      if (request.method === "POST") status = error.status;
-    }
+  const reading = url.searchParams.has("training");
+  // Reading the training or planning is use, and renews the link; fetching the bare address is not.
+  const userId = await coachLinkUser((await ctx.params).token, reading || !!add || !!remove);
+  if (!userId) {
+    return answer("This PaceBeep coach link no longer works: the runner disconnected it, or it went 30 days without use. Ask the runner for a new one: in the PaceBeep app, Connect an assistant.\n", 404);
   }
-  return answer(`${outcome && `${outcome}\n\n`}${await coachBrief(userId, url.origin + url.pathname)}`, status);
+  const link = url.origin + url.pathname;
+  if (!add && !remove) return reading ? answer(await coachBrief(userId, link), 200, true) : answer(coachCover(link));
+
+  let outcome: string;
+  let status = 200;
+  try {
+    outcome = await coachWrite(userId, { add, remove });
+  } catch (error) {
+    if (!(error instanceof ClientError)) throw error;
+    outcome = `Not done: ${error.message}`;
+    if (request.method === "POST") status = error.status;
+  }
+  return answer(`${outcome}\n\n${await coachPlanned(userId, link)}`, status, true);
 }
 
 export { handle as GET, handle as POST };
