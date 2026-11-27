@@ -11,14 +11,14 @@ docker exec pacebeep-db createdb -U postgres pacebeep_shots
 npm run db:migrate && npm run dev -- -p 3201
 ```
 
-Create the demo account (a throwaway password; keep it out of the repo), seed it, and connect a "ChatGPT" client through the real OAuth flow so the dashboard lists it:
+Create the demo account (a throwaway password; keep it out of the repo), seed it, and connect a "Personal assistant" client through the real OAuth flow so the dashboard lists it:
 
 ```bash
 export PB_EMAIL=runner@example.test PB_PASSWORD=$(openssl rand -hex 8)
 curl -s -X POST http://localhost:3201/api/auth/sign-up/email -H 'content-type: application/json' -H 'origin: http://localhost:3201' \
   -d "{\"email\":\"$PB_EMAIL\",\"password\":\"$PB_PASSWORD\",\"name\":\"Alex\"}"
 docker exec -i pacebeep-db psql -U postgres -d pacebeep_shots < scripts/screenshots/seed.sql
-node scripts/screenshots/connect-chatgpt.mjs
+node scripts/screenshots/connect-assistant.mjs
 ```
 
 ## 2. iPhone (simulator, iPhone 17 Pro)

@@ -26,7 +26,9 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
       <p className="muted text-center text-xs">
         <a href="https://apps.apple.com/app/pacebeep/id6818211974" className="underline">App Store</a> ·{" "}
         <a href="https://github.com/gadshushan3030/pacebeep" className="underline">Open source</a> ·{" "}
-        <Link href="/privacy" className="underline">Privacy</Link> · <Link href="/terms" className="underline">Terms</Link>
+        <Link href="/privacy" className="underline">Privacy</Link> · <Link href="/terms" className="underline">Terms</Link> ·{" "}
+        {/* An assistant sent to the site lands here: this is its way to the instructions. */}
+        <a href="/assistant" className="underline">For AI assistants</a>
       </p>
     </main>
   );

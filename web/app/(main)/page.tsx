@@ -1,6 +1,8 @@
 import Link from "next/link";
-import { revokeConnection } from "@/app/actions";
+import { removeCoachLink, revokeConnection } from "@/app/actions";
+import { listCoachLinks } from "@/lib/coach-link";
 import { sql, today } from "@/lib/db";
+import { NewCoachLink } from "./NewCoachLink";
 import { requireUser } from "@/lib/session";
 import { fmtDuration, fmtHours, formatDate, listRuns, summary, totalSec, weekWorkouts } from "@/lib/workouts";
 
@@ -19,10 +21,11 @@ export default async function Dashboard() {
   const user = await requireUser();
   const now = today();
   const days = weekOf(now);
-  const [s, runs, week, connections] = await Promise.all([
+  const [s, runs, week, links, connections] = await Promise.all([
     summary(user.id),
     listRuns(user.id, 8),
     weekWorkouts(user.id, days[0], days[6]),
+    listCoachLinks(user.id),
     sql<{ client_id: string; name: string | null; granted_at: Date }>(
       `select c."clientId" as client_id, c.name, cs."createdAt" as granted_at
        from "oauthConsent" cs join "oauthClient" c on c."clientId" = cs."clientId"
@@ -124,9 +127,23 @@ export default async function Dashboard() {
                 </form>
               </li>
             ))}
-            {!connections.length && <li className="muted p-5 text-center">Nothing connected yet.</li>}
+            {links.map((l) => (
+              <li key={l.id} className="flex min-h-[76px] items-center gap-3.5 border-b border-[var(--border)] px-[18px] py-3.5 last:border-b-0">
+                <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                  <span className="text-[17px] font-bold">Coach link</span>
+                  <span className="muted text-[13px]">
+                    Reads your training, plans workouts · made {fmtDate(l.created_at)} · {l.last_used_at ? `last used ${fmtDate(l.last_used_at)}` : "not used yet"} · ends {fmtDate(l.ends_at)} unless used
+                  </span>
+                </span>
+                <form action={removeCoachLink.bind(null, l.id)}>
+                  <button className="btn btn-ghost text-sm">Disconnect</button>
+                </form>
+              </li>
+            ))}
+            {!connections.length && !links.length && <li className="muted p-5 text-center">Nothing connected yet.</li>}
           </ul>
-          <p className="muted text-sm leading-relaxed">Disconnect cuts that app off at once. Your other connections keep working.</p>
+          <p className="muted text-sm leading-relaxed">Disconnect cuts that app or link off at once. Your other connections keep working.</p>
+          <NewCoachLink />
         </section>
       </div>
     </>

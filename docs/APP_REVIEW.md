@@ -20,7 +20,7 @@ It prints the email (`appreview@pacebeep.example`) and, the first time, a passwo
 - **Notes**:
 
 ```
-PaceBeep plays interval running workouts. Users plan them with their AI assistant (ChatGPT or Claude, connected to our server), and the app plays them. No assistant is needed to review it: every new account starts with three workouts.
+PaceBeep plays interval running workouts. Users plan them with their personal AI assistant (connected to our server), and the app plays them. No assistant is needed to review it: every new account starts with three workouts.
 
 1. Tap "Sign in to PaceBeep", then "Continue with Apple" (or Google), and tap Allow.
 2. Tap Start on "First intervals" (about 5 minutes). Beeps and voice cues mark the changes between running and resting.

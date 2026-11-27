@@ -2,7 +2,7 @@
 
 **Your AI coach writes the workout. Your iPhone beeps it on the lock screen.**
 
-Free, ad-free, open-source iOS interval & gym timer: Claude, ChatGPT, Muse, or any MCP client plans sessions over OAuth; the SwiftUI app runs them as a Live Activity (lock screen / Dynamic Island) with beeps and Done/Skip; you rate difficulty and the coach sees it.
+Free, ad-free, open-source iOS interval & gym timer: your personal assistant (Muse, or any MCP client) plans sessions over OAuth; the SwiftUI app runs them as a Live Activity (lock screen / Dynamic Island) with beeps and Done/Skip; you rate difficulty and the coach sees it.
 
 [![Download on the App Store](https://tools.applemediaservices.com/api/badges/download-on-the-app-store/black/en-us?size=250x83)](https://apps.apple.com/app/pacebeep/id6818211974)
 
@@ -22,13 +22,15 @@ No ads, no subscription, no tracking. MIT. Author: [Gad Shushan](https://x.com/S
 
 ## How it works
 
-1. **Coach** — You ask Claude, ChatGPT, Muse, or any MCP client to plan your week.
+1. **Coach** — You ask your personal assistant (Muse, or any MCP client) to plan your week.
 2. **MCP** — The assistant connects to PaceBeep’s hosted MCP server over OAuth and writes workouts into *your* account.
 3. **Phone** — The iPhone app pulls those workouts, plays them with beeps that survive the lock screen, shows a Live Activity, and sends the run + your RPE back to the coach.
 
 ![Architecture: runners and AI coaches, two doors into one Next.js app over Postgres](docs/architecture.svg)
 
 Every new account starts with three starter workouts, so you can try the beeps before an assistant is connected.
+
+Your assistant can't add an MCP server (many of the ones you text in WhatsApp can't)? Send it a [coach link](#no-connector-send-it-a-coach-link): one URL it opens, with no sign-in on its side.
 
 ## Connect your AI coach via MCP
 
@@ -45,26 +47,21 @@ That URL is the app’s MCP resource (`BETTER_AUTH_URL` + `/mcp`). Discovery and
 
 Self-hosted: use `https://<your-app>/mcp` instead (see [Deploy your own](#deploy-your-own-vercel--neon)).
 
-### ChatGPT
+Nothing here is specific to one vendor: any personal assistant that can add a remote MCP server with OAuth can be the coach. What it needs, whoever makes it:
 
-1. ChatGPT → Settings → Security and login → **Developer mode**.
-2. [chatgpt.com/plugins](https://chatgpt.com/plugins) → **Add** → Create MCP App → URL `https://pacebeep.vercel.app/mcp`, authentication **OAuth**.
-3. Sign in to PaceBeep, check the app name and return address, **Allow**.
-4. In ChatGPT’s **Work** tab, type `@` and pick the app.
+- The URL `https://pacebeep.vercel.app/mcp`, transport **Streamable HTTP**.
+- **OAuth 2.1**. The assistant finds the authorization server from the `401` answer (`WWW-Authenticate: Bearer resource_metadata=…`), registers itself (dynamic client registration) and uses PKCE (S256). There is no API key, client id or secret to paste.
+- You, once: the assistant gives you a sign-in link; sign in to PaceBeep with the same Apple or Google account as in the app and **Allow** on PaceBeep’s consent page. An assistant can't do this step for you.
 
-### Claude (claude.ai / Desktop)
+### An assistant with a settings screen
 
-**Customize → Connectors → Add → Custom → Web** (wording varies slightly by plan) → URL `https://pacebeep.vercel.app/mcp`. Choose sign-in when prompted; complete OAuth on PaceBeep’s consent page. Remote connectors are reached from Anthropic’s cloud, so this URL must be publicly reachable (the hosted endpoint is).
+Where it lists connectors, integrations, tools or MCP servers: add a custom (remote) MCP server with the URL above and choose OAuth. Hosted assistants reach the URL from their own cloud, so it must be publicly reachable (the hosted endpoint is).
 
-### Claude Code
+### An assistant you only talk to
 
-Verified against [Claude Code MCP docs](https://code.claude.com/docs/en/mcp): a `url` with no `type` is treated as stdio and skipped.
+In WhatsApp, iMessage or Telegram, ask it in your own words, for example: *“Connect to the MCP server at https://pacebeep.vercel.app/mcp (Streamable HTTP, OAuth) and send me the sign-in link.”* Open the link yourself. If it answers that it can't add an outside MCP server, that is the assistant's own limit and no setting in PaceBeep changes it: send it a [coach link](#no-connector-send-it-a-coach-link) instead.
 
-```bash
-claude mcp add --transport http pacebeep https://pacebeep.vercel.app/mcp
-```
-
-Or in `.mcp.json`:
+### An assistant or client configured with a file
 
 ```json
 {
@@ -77,25 +74,39 @@ Or in `.mcp.json`:
 }
 ```
 
-(`"streamable-http"` is accepted as an alias for `"http"`.)
+Keep `"type": "http"`: some clients read a `url` with no `type` as a local server and skip it.
 
-### Cursor
-
-Add a remote server in MCP settings, or:
-
-```json
-{
-  "mcpServers": {
-    "pacebeep": {
-      "url": "https://pacebeep.vercel.app/mcp"
-    }
-  }
-}
-```
-
-After you allow access, try: *“Use PaceBeep: get my summary, then plan three interval sessions this week.”*
+After you allow access, try: *“Use PaceBeep: get my summary, then plan three interval sessions this week.”* To cut an assistant off, **Disconnect** it on the web dashboard.
 
 Registry metadata for the same remote server lives in [`server.json`](server.json).
+
+### No connector? Send it a coach link
+
+For an assistant that can open a URL or send an HTTP request, but can't add an MCP server or get through a sign-in page.
+
+1. Make the link. In the iPhone app: **Connect an assistant** on the home screen (App Store version 1.0.4 and later). On the web: [dashboard](https://pacebeep.vercel.app) → Connected → **New coach link**.
+2. Paste what it copied into your chat with the assistant: the link, with one line saying what it is for.
+3. The assistant opens the link. Its first page holds no training: it only says where the training is (`…/c/<token>?training`), so a chat app that fetches the link to draw a preview receives none of it. The training page shows your recent runs (with RPE and heart rate) and your planned workouts, and tells the assistant how to add workouts with whatever it has:
+
+| The assistant can… | It sends |
+|---|---|
+| make HTTP requests | `POST https://pacebeep.vercel.app/c/<token>` with a JSON list of workouts as the body |
+| drive a browser | the form at the bottom of the page |
+| only fetch a page | `GET https://pacebeep.vercel.app/c/<token>?add=<the list, URL-encoded>` |
+
+The answer always starts with what happened (`Added 3 workouts.` or `Not done:` and the reason) and then lists what is planned now, so an assistant that only sees page text can still correct itself. A `GET` answers 200 either way (page-fetching tools tend to hide the body of an error); a `POST` that is not done carries the error status too. Workouts it adds are **pending** until you approve or start them, exactly like a connected coach’s. It can remove a workout a coach added (`POST {"delete":"<id>"}` or `GET …?delete=<id>`), never one you made yourself or one that already has a run.
+
+The link is the key: anyone who has it can read your training and plan workouts, there is no consent screen and no token exchange. Only its SHA-256 is stored, so it is shown once; make another any time. It ends after 30 days without use (reading the training or planning renews it), and **Disconnect** on the dashboard ends it at once. An assistant that was only told “be my coach in PaceBeep” finds all of this at [pacebeep.vercel.app/assistant](https://pacebeep.vercel.app/assistant).
+
+### No MCP? Paste a plan from your assistant
+
+For an assistant that can only write text. Nothing is connected: it writes the plan and you paste it.
+
+1. In the iPhone app: **Paste a plan** on the home screen (App Store version 1.0.4 and later). On the web: [Workouts](https://pacebeep.vercel.app/workouts).
+2. **Copy the prompt** and send it to your personal assistant, with what you want: *“a 9-week run-walk plan to my first 5K, 3 days a week.”*
+3. Copy its answer and paste it back. The workouts land in your plan, already approved.
+
+The answer is a JSON list of interval workouts (the same fields as `create_workout`); the server validates it, and an error names the workout and field so you can hand it back to the assistant. Pasting the same plan twice adds nothing. Workouts dated before today are left out, and a plan with nothing else is refused. After a paste, **Undo** takes back what it added; when a plan you pasted before is still in your list, **Remove the earlier plan** drops it in one tap. This path is one-way: the assistant doesn’t see your runs or RPE, so it can’t adjust the plan the way a connected coach does.
 
 ### MCP tools
 
@@ -121,11 +132,12 @@ Registry metadata for the same remote server lives in [`server.json`](server.jso
 ```
 iPhone (SwiftUI) ──── OAuth 2.1 + PKCE ───┐
                                           ▼
-ChatGPT / Claude / MCP client ──►  Next.js on Vercel
+Assistant / MCP client ─────────►  Next.js on Vercel
                                    ├─ /api/auth/*     Better Auth + OAuth 2.1
                                    ├─ /.well-known/*  discovery
                                    ├─ /oauth/consent  you approve each coach
                                    ├─ /api/*          REST for the iPhone app
+                                   ├─ /c/<token>      coach link: no connector, no sign-in
                                    └─ /mcp            MCP (token aud = /mcp)
                                             │
                                             ▼
@@ -148,6 +160,7 @@ On the web: the week your coach planned, what you ran and how it felt, and which
 
 - **Accounts**: Continue with Apple / Google (when configured) or email + password (Better Auth). With Apple or Google on, new accounts come only from them (their emails are verified, so nobody can pre-register a password account on someone else's email); password sign-in keeps working for existing accounts. Set `SIGNUP_ENABLED=false` to close registration entirely. New accounts get three starter workouts.
 - **Agents**: dynamic client registration → you approve on `/oauth/consent` → access token bound to `<BETTER_AUTH_URL>/mcp`. **Disconnect** on the dashboard deletes that user’s consent and tokens immediately.
+- **Coach links**: for an assistant with no connector. The token in `/c/<token>` is the whole credential (stored hashed); it reads runs and plans, and its workouts arrive `pending`. The pasted address itself shows no training, the link ends after 30 days without use, and **Disconnect** deletes it.
 - **Reminders**: coach creates/changes a workout → `pending` → optional APNs push → you approve in the app → local notification at the scheduled time.
 - **Data**: `workouts` (plans), `runs` (what happened), `run_feedback` (RPE/notes). Writes carry a `request_id` so retries never duplicate.
 
@@ -162,6 +175,9 @@ The app is another OAuth client of the same server (redirect `app.vercel.pacebee
 | `GET /api/workouts` | Upcoming / unscheduled workouts (`?blocks=1` for full gym workouts) |
 | `POST /api/runs` | `{ request_id, run, feedback? }` — device run + optional RPE; idempotent |
 | `POST /api/workouts/approve` | Runner OK for a coach-planned workout |
+| `GET /api/workouts/import` | `{ prompt }` — the text to give an assistant so it answers with a plan |
+| `POST /api/workouts/import` | `{ text }` — the assistant’s answer as copied; stores its workouts (approved), idempotent. Answers `{ workouts, past, created, earlier }`: ids it added (Undo) and ids left from an earlier pasted plan |
+| `POST /api/coach-links` | `{ url, invite }` — a new coach link and the sentence to send it with |
 | `POST /api/devices` | APNs token registration (`DELETE` on sign-out) |
 
 ## Run locally (web)

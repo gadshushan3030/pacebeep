@@ -12,7 +12,7 @@ export async function sql<T = Record<string, unknown>>(text: string, params: unk
   return (await pool.query(text, params)).rows as T[];
 }
 
-// Israel local date (YYYY-MM-DD); the server runs in UTC on Vercel.
-export function today() {
-  return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Jerusalem" }).format(new Date());
+// Israel local date (YYYY-MM-DD), now or at `at`; the server runs in UTC on Vercel.
+export function today(at = new Date()) {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Jerusalem" }).format(at);
 }

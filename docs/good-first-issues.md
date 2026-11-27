@@ -68,7 +68,7 @@ Small, real tasks spotted in the current codebase. Each one should fit a first-t
 
 **Labels:** `good first issue`, `enhancement`
 
-**Why:** When no OAuth clients are linked, the dashboard only says “Nothing connected yet.” Visitors who just signed up never see how to attach ChatGPT / Claude / Cursor.
+**Why:** When no OAuth clients are linked, the dashboard only says “Nothing connected yet.” Visitors who just signed up never see how to attach a personal assistant.
 
 **Files:** `web/app/(main)/page.tsx`, optionally a short public `/connect` page or link to the README section on the marketing site
 
@@ -144,7 +144,7 @@ Small, real tasks spotted in the current codebase. Each one should fit a first-t
 
 **Labels:** `good first issue`, `enhancement`
 
-**Why:** `/oauth/consent` lists permissions and redirect URIs, but never shows the MCP resource URL. New users approving ChatGPT / Claude cannot verify what they are connecting.
+**Why:** `/oauth/consent` lists permissions and redirect URIs, but never shows the MCP resource URL. New users approving an assistant cannot verify what they are connecting.
 
 **Files:** `web/app/oauth/consent/page.tsx`, `web/lib/auth.ts` (`MCP_RESOURCE`)
 

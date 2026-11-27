@@ -1,13 +1,13 @@
 # PaceBeep – architecture and agent brief
 
-PaceBeep is an open-source interval-running app: an iOS client plus a small web backend that AI agents (ChatGPT, Claude) can connect to over MCP, with OAuth and per-user data.
+PaceBeep is an open-source interval-running app: an iOS client plus a small web backend that AI agents (personal assistants) can connect to over MCP, with OAuth and per-user data.
 
 This file is both the architecture reference and the starting prompt for a coding agent. Paste everything under **Agent prompt** into a new session in this repo.
 
 ```
 iPhone (SwiftUI) ──── OAuth 2.1 + PKCE ───┐
                                           ▼
-ChatGPT / agent ── DCR + PKCE ──►  Next.js on Vercel
+Assistant/agent ── DCR + PKCE ──►  Next.js on Vercel
                                    ├─ /api/auth/*    Better Auth: login, owner lock, OAuth 2.1 server
                                    ├─ /.well-known/* discovery (RFC 8414 / RFC 9728)
                                    ├─ /oauth/consent owner approves each agent
@@ -20,7 +20,7 @@ ChatGPT / agent ── DCR + PKCE ──►  Next.js on Vercel
 
 ## Agent prompt
 
-You are setting up PaceBeep (repo: pacebeep, public, open source): an interval-running app with an iOS client and a small web backend that AI agents (ChatGPT, Claude) can connect to over MCP.
+You are setting up PaceBeep (repo: pacebeep, public, open source): an interval-running app with an iOS client and a small web backend that AI agents (personal assistants) can connect to over MCP.
 
 ### Decisions (made)
 1. Deployment model: **hosted multi-user** – open email + password registration (`SIGNUP_ENABLED=false` closes it). Every row is scoped by `user_id`; disconnecting an assistant removes only that user's consent and tokens, never the shared OAuth client.
@@ -40,9 +40,9 @@ You are setting up PaceBeep (repo: pacebeep, public, open source): an interval-r
   - Signing: the project's team id and bundle id are defaults in `Config.xcconfig` (neither is secret); a gitignored `Local.xcconfig` overrides them for anyone building their own copy.
 - **/web**: Next.js 16 (App Router, TypeScript) on Vercel + Postgres (Neon via Vercel Storage).
   - Better Auth: email + password with open registration (min 10 characters).
-  - OAuth for agents: `@better-auth/mcp` `mcp()` plugin with `jwt()`, `loginPage: "/login"`, `consentPage: "/oauth/consent"`, `resource: <BETTER_AUTH_URL>/mcp`, `allowDynamicClientRegistration` + `allowUnauthenticatedClientRegistration` (ChatGPT registers itself with DCR).
+  - OAuth for agents: `@better-auth/mcp` `mcp()` plugin with `jwt()`, `loginPage: "/login"`, `consentPage: "/oauth/consent"`, `resource: <BETTER_AUTH_URL>/mcp`, `allowDynamicClientRegistration` + `allowUnauthenticatedClientRegistration` (an assistant registers itself with DCR).
   - Discovery routes: `/.well-known/oauth-authorization-server/api/auth`, `/api/auth/.well-known/openid-configuration`, `/.well-known/oauth-protected-resource[/mcp]`.
-  - `/mcp`: `@modelcontextprotocol/server` v2 `createMcpHandler` (do NOT set `legacy: "reject"`; ChatGPT speaks protocol 2025-06-18), wrapped in `requireMcpAuth` (JWT via JWKS, `aud` = `/mcp`). Also require an `oauthConsent` row for (`sub`, `azp`) on every request so "disconnect" takes effect immediately.
+  - `/mcp`: `@modelcontextprotocol/server` v2 `createMcpHandler` (do NOT set `legacy: "reject"`; some assistants speak protocol 2025-06-18), wrapped in `requireMcpAuth` (JWT via JWKS, `aud` = `/mcp`). Also require an `oauthConsent` row for (`sub`, `azp`) on every request so "disconnect" takes effect immediately.
   - Disconnect (multi-user) = delete this user's `oauthConsent`, `oauthRefreshToken` and `oauthAccessToken` rows for that client. Never delete the `oauthClient` row: other users may share it. Deleting only the consent would NOT revoke refresh tokens.
   - Next 16 uses `proxy.ts` (not `middleware.ts`); exclude `api/auth`, `mcp` and `.well-known` from it.
 
@@ -66,13 +66,13 @@ Dashboard: workouts, runs (planned vs. actual per interval), connected agents wi
 - Vercel env vars are Sensitive (they can't be pulled locally), so run migrations in a `vercel-build` script. Migrations are plain SQL in `db/migrations` (Better Auth tables generated with `npx auth generate`).
 - Local dev: `postgres:17` in Docker (`npm run db:up`).
 - Never ask the user to paste a connection snippet into a terminal; read it from the clipboard inside the command and clear the clipboard afterwards.
-- README: self-host steps (Vercel + Neon), ChatGPT connection steps, MCP tool table.
+- README: self-host steps (Vercel + Neon), assistant connection steps, MCP tool table.
 
 ### Verification before calling anything done
 - Web: lint, `tsc`, `build`.
 - Full OAuth flow with a scripted client: DCR → authorize with PKCE + `resource` → consent → token → every MCP tool.
 - Replayed writes create no duplicates; a second user can't read, change or link to the first user's rows; disconnect returns 401 for that user's still-valid token while other users on the same client keep working.
 - iOS: builds in the simulator; cues play in the background; runs sync after going offline and back online.
-- Real ChatGPT: the user opens a tunnel themselves (`cloudflared tunnel --url http://localhost:3000`); add `allowedDevOrigins: ["*.trycloudflare.com"]` and set `BETTER_AUTH_URL` to the tunnel URL for that test.
+- A real hosted assistant: the user opens a tunnel themselves (`cloudflared tunnel --url http://localhost:3000`); add `allowedDevOrigins: ["*.trycloudflare.com"]` and set `BETTER_AUTH_URL` to the tunnel URL for that test.
 
 Start with **/web** (auth + MCP + DB), prove the OAuth + MCP flow end to end, then build **/ios**.

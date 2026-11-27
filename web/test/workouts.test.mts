@@ -3,7 +3,7 @@
 import assert from "node:assert/strict";
 import { after, before, test } from "node:test";
 import { pool, sql } from "@/lib/db";
-import { approveWorkout, ClientError, createWorkout, deleteWorkout, getRun, getWorkout, recordRun, summary, updateWorkout, upcomingWorkouts, workoutInput, type WorkoutInput } from "@/lib/workouts";
+import { approveWorkout, ClientError, createWorkout, deleteWorkout, deleteWorkouts, getRun, getWorkout, importPlan, parsePlan, planPrompt, recordRun, summary, updateWorkout, upcomingWorkouts, workoutInput, type WorkoutInput } from "@/lib/workouts";
 
 const skip = !process.env.DATABASE_URL && "DATABASE_URL unset";
 const userId = `test-${Date.now()}`;
@@ -111,4 +111,52 @@ test("a run keeps the watch's heart rate, per run and per interval; max below av
   assert.equal(run.max_hr, 171);
   assert.equal(run.intervals[0].avg_hr, 160);
   await assert.rejects(recordRun(userId, "hr2", { ...at, avg_hr: 150, max_hr: 140, intervals: [] }), (e) => e instanceof ClientError && e.status === 400);
+});
+
+const plan = [
+  { name: "W1 D1", scheduled_for: "2099-02-01", warmup_sec: 300, repeats: 8, work_sec: 60, rest_sec: 90, cooldown_sec: 300, week: 1 },
+  { name: "W1 D2", scheduled_for: "2099-02-03", repeats: 1, work_sec: 1200 },
+];
+
+test("a pasted plan is read from a chat's answer: fenced, wrapped, or one workout; bad ones say why", () => {
+  const fenced = parsePlan("Here is your plan:\n```json\n" + JSON.stringify(plan, null, 2) + "\n```\nGood luck!");
+  assert.deepEqual(fenced.map((w) => [w.name, w.rest_sec]), [["W1 D1", 90], ["W1 D2", 0]]);
+  assert.equal("week" in fenced[0], false);
+  assert.equal(parsePlan(JSON.stringify({ workouts: plan })).length, 2);
+  assert.equal(parsePlan(JSON.stringify(plan[0])).length, 1);
+  const says = (text: string, part: string) => assert.throws(() => parsePlan(text), (e) => e instanceof ClientError && e.status === 400 && e.message.includes(part));
+  says("Sure! What is your goal?", "No plan found");
+  says(JSON.stringify([{ ...plan[0], work_sec: 2 }]), "work_sec");
+  says(JSON.stringify([{ name: "no intervals" }]), "repeats and work_sec");
+  says("[]", "Too small");
+  // The prompt's example is a plan the server takes; the prompt itself, pasted back, is refused.
+  const prompt = planPrompt("2099-02-01");
+  assert.equal(parsePlan(prompt.slice(prompt.indexOf("["), prompt.lastIndexOf("]") + 1)).length, 1);
+  says(prompt, "prompt itself");
+});
+
+test("importing a plan stores it approved, once: the same text again creates nothing", { skip }, async () => {
+  const text = JSON.stringify(plan);
+  const counts = async (t: string) => { const r = await importPlan(userId, t); return [r.workouts, r.created.length, r.past]; };
+  assert.deepEqual(await counts(text), [2, 2, 0]);
+  assert.deepEqual(await counts("```\n" + text + "\n```"), [2, 0, 0]);
+  const up = (await upcomingWorkouts(userId, "2099-02-01", false)).filter((w) => w.name.startsWith("W1 "));
+  assert.deepEqual(up.map((w) => [w.name, w.status, w.scheduled_for]), [["W1 D1", "approved", "2099-02-01"], ["W1 D2", "approved", "2099-02-03"]]);
+  // One week rewritten and sent with the rest: only the new workout is added, and the workout it
+  // was meant to replace is named as left over from the earlier plan.
+  const second = await importPlan(userId, JSON.stringify([plan[0], { ...plan[1], name: "W1 D2 easier", work_sec: 600 }]));
+  assert.deepEqual([second.workouts, second.created.length, second.past], [2, 1, 0]);
+  const names = async (ids: string[]) => (await upcomingWorkouts(userId, "2099-02-01", false)).filter((w) => ids.includes(w.id)).map((w) => w.name);
+  assert.deepEqual(await names(second.earlier), ["W1 D2"]);
+  // "Remove the earlier plan", then Undo: each takes exactly its own workouts.
+  assert.equal(await deleteWorkouts(userId, second.earlier), 1);
+  assert.equal(await deleteWorkouts(userId, second.created), 1);
+  assert.deepEqual((await upcomingWorkouts(userId, "2099-02-01", false)).filter((w) => w.name.startsWith("W1 ")).map((w) => w.name), ["W1 D1"]);
+});
+
+test("a pasted plan dated in the past is refused; past workouts in a mixed plan are left out", { skip }, async () => {
+  const old = { ...plan[0], name: "W0 old", scheduled_for: "2001-01-01" };
+  await assert.rejects(importPlan(userId, JSON.stringify([old])), (e) => e instanceof ClientError && e.status === 400 && e.message.includes("dated before today"));
+  const mixed = await importPlan(userId, JSON.stringify([old, { ...plan[0], name: "W9 new", scheduled_for: "2099-04-01" }]));
+  assert.deepEqual([mixed.workouts, mixed.created.length, mixed.past], [1, 1, 1]);
 });

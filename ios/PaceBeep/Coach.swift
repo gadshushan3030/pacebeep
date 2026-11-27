@@ -119,6 +119,72 @@ final class Coach {
         Task { await flush() }
     }
 
+    /// A coach link for an assistant with no connector, inside the sentence to send it with: the
+    /// runner pastes it into their chat. A new link each time; earlier ones keep working until
+    /// disconnected on the web dashboard. nil without a connection.
+    func coachInvite() async -> String? {
+        var r = URLRequest(url: Auth.server.appending(path: "api/coach-links"))
+        r.httpMethod = "POST"
+        guard let (data, http) = try? await auth.send(r), http.statusCode == 200 else { return nil }
+        return (try? JSONDecoder().decode([String: String].self, from: data))?["invite"]
+    }
+
+    /// The text to give any chat so that it answers with a plan this app can read. From the server,
+    /// so it can improve without an app release; nil without a connection.
+    func planPrompt() async -> String? {
+        let url = Auth.server.appending(path: "api/workouts/import")
+            .appending(queryItems: [.init(name: "today", value: dayFormat("yyyy-MM-dd").string(from: Date()))])
+        guard let (data, http) = try? await auth.send(URLRequest(url: url)), http.statusCode == 200 else { return nil }
+        return (try? JSONDecoder().decode([String: String].self, from: data))?["prompt"]
+    }
+
+    /// What became of a pasted plan: whether it went in, what to tell the runner, the workouts it
+    /// added (Undo removes them), and the ones still there from a plan pasted before.
+    struct Imported {
+        var ok: Bool
+        var message: String
+        var created: [String] = []
+        var earlier: [String] = []
+    }
+
+    /// A plan pasted from a chat (its answer to planPrompt). The server reads and stores it, and
+    /// the same text again adds nothing.
+    func importPlan(_ text: String) async -> Imported {
+        struct Answer: Decodable {
+            let workouts: Int?
+            let past: Int?
+            let created: [String]?
+            let earlier: [String]?
+            let error: String?
+        }
+        var r = URLRequest(url: Auth.server.appending(path: "api/workouts/import"))
+        r.httpMethod = "POST"
+        r.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        r.httpBody = try? JSONEncoder().encode(["text": text])
+        guard let (data, http) = try? await auth.send(r) else { return Imported(ok: false, message: "No connection. Try again.") }
+        let answer = try? JSONDecoder().decode(Answer.self, from: data)
+        guard http.statusCode == 200, let created = answer?.created, let total = answer?.workouts else {
+            return Imported(ok: false, message: answer?.error ?? "The server couldn't read it. Try again.")
+        }
+        await sync()
+        let past = answer?.past ?? 0
+        return Imported(
+            ok: true,
+            message: (created.isEmpty ? "Already added: \(total) workout\(total == 1 ? "" : "s")." : "Added \(created.count) workout\(created.count == 1 ? "" : "s").")
+                + (past > 0 ? " \(past) dated before today left out." : ""),
+            created: created, earlier: answer?.earlier ?? [])
+    }
+
+    /// Undo of a pasted plan, or dropping the plan pasted before it: each workout goes as a single
+    /// delete does (gone here at once, sent like a run is; one that already has a run comes back).
+    func delete(ids: [String]) {
+        server.removeAll { ids.contains($0.id) }
+        approvals.removeAll { ids.contains($0.workout_id) }
+        deletions += ids.map { Deletion(workout_id: $0) }
+        saveOutbox()
+        Task { await flush() }
+    }
+
     /// "Remind me" in the offer: the system prompt, then the reminders (denied: none, quietly),
     /// and the device token for the coach's push.
     func enableReminders() async {

@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 /// The next workout from the coach up top, the rest of the plan below, the quick test last.
 /// A workout the coach planned waits for approval: Approve (the time can move) or Start, which approves too.
@@ -10,6 +11,9 @@ struct HomeView: View {
     let start: (Workout) -> Void
     @State private var approving: Workout?
     @State private var deleting: Workout?
+    @State private var pasting = false
+    /// What "Connect an assistant" has to say: copied, or no connection.
+    @State private var linkNote: String?
 
     var body: some View {
         let next = coach.workouts.first { $0.id == opened } ?? coach.workouts.first { !$0.done }
@@ -39,21 +43,16 @@ struct HomeView: View {
                 }
                 VStack(alignment: .leading, spacing: 10) {
                     Text("Built in").eyebrow()
-                    Button { start(.quickTest) } label: {
-                        HStack(spacing: 12) {
-                            Image(systemName: "speaker.wave.2").font(.system(size: 18, weight: .semibold))
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text("Quick test").font(.system(size: 16, weight: .bold))
-                                Text("2 min · check the beeps with the screen locked").font(.footnote).foregroundStyle(Theme.muted)
-                            }
-                            Spacer(minLength: 0)
+                    // No connector needed on the assistant's side: it opens the link the runner sends it.
+                    BuiltInRow(icon: "link", title: "Connect an assistant", detail: "Copy a link any AI can open") {
+                        Task {
+                            guard let invite = await coach.coachInvite() else { return linkNote = "No connection. Try again." }
+                            UIPasteboard.general.string = invite
+                            linkNote = "Copied. Paste it in a chat with your personal assistant: it opens the link, sees your training and plans your workouts. Anyone with the link can do that, so send it only there."
                         }
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 10)
-                        .frame(minHeight: 56)
-                        .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(Color(hex: 0xB9B6AD), style: StrokeStyle(lineWidth: 1.5, dash: [5, 4])))
                     }
-                    .buttonStyle(.plain)
+                    BuiltInRow(icon: "doc.on.clipboard", title: "Paste a plan", detail: "From your personal assistant") { pasting = true }
+                    BuiltInRow(icon: "speaker.wave.2", title: "Quick test", detail: "2 min · check the beeps with the screen locked") { start(.quickTest) }
                 }
                 ForEach([error, coach.message].compactMap { $0 }, id: \.self) {
                     Text($0).font(.footnote).foregroundStyle(Theme.muted)
@@ -74,10 +73,16 @@ struct HomeView: View {
         .background(Theme.paper)
         .refreshable { await coach.sync() }
         .sheet(item: $approving) { w in ApproveSheet(workout: w) { coach.approve(w, at: $0) } }
+        .sheet(isPresented: $pasting) { PlanSheet(coach: coach) }
         .confirmationDialog("Delete \(deleting?.name ?? "")?", isPresented: Binding(get: { deleting != nil }, set: { if !$0 { deleting = nil } }), titleVisibility: .visible) {
             Button("Delete workout", role: .destructive) { if let deleting { coach.delete(deleting) } }
         } message: {
             Text("It leaves your plan and its reminder goes. Your coach sees it gone.")
+        }
+        .alert("Coach link", isPresented: Binding(get: { linkNote != nil }, set: { if !$0 { linkNote = nil } })) {
+            Button("OK") {}
+        } message: {
+            Text(linkNote ?? "")
         }
         .alert("Remind you when it's time?", isPresented: $coach.remindersOffer) {
             Button("Remind me") { Task { await coach.enableReminders() } }
@@ -113,6 +118,32 @@ struct HomeView: View {
         guard let lastSync = coach.lastSync else { return "Saved on this phone" }
         let minutes = Int(Date().timeIntervalSince(lastSync) / 60)
         return minutes < 1 ? "Synced just now" : "Synced \(minutes) min ago"
+    }
+}
+
+/// Something the app offers without a coach: dashed, below the plan.
+private struct BuiltInRow: View {
+    let icon: String
+    let title: String
+    let detail: String
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 12) {
+                Image(systemName: icon).font(.system(size: 18, weight: .semibold))
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(title).font(.system(size: 16, weight: .bold))
+                    Text(detail).font(.footnote).foregroundStyle(Theme.muted)
+                }
+                Spacer(minLength: 0)
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 10)
+            .frame(minHeight: 56)
+            .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(Color(hex: 0xB9B6AD), style: StrokeStyle(lineWidth: 1.5, dash: [5, 4])))
+        }
+        .buttonStyle(.plain)
     }
 }
 
