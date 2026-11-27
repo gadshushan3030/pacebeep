@@ -1,4 +1,5 @@
 import { coachBrief, coachCover, coachLinkUser, coachPlanned, coachWrite } from "@/lib/coach-link";
+import { event } from "@/lib/log";
 import { ClientError } from "@/lib/workouts";
 
 // A coach link, for an assistant with no connector. No session and no bearer token: the token in
@@ -31,6 +32,10 @@ async function handle(request: Request, ctx: RouteContext<"/c/[token]">) {
   const answer = (text: string, status = 200, form = false) =>
     new Response(html ? page(text, form) : text, { status, headers: { ...headers, "Content-Type": `text/${html ? "html" : "plain"}; charset=utf-8` } });
 
+  // How far an assistant got, and which one: the request log shows neither (see lib/log.ts).
+  const seen = (did: string, more: Record<string, unknown> = {}) =>
+    event("coach-link", { did, via: request.method, ...more, ua: (request.headers.get("user-agent") ?? "").slice(0, 120) });
+
   const url = new URL(request.url);
   let add = url.searchParams.get("add");
   let remove = url.searchParams.get("delete");
@@ -54,17 +59,25 @@ async function handle(request: Request, ctx: RouteContext<"/c/[token]">) {
   // Reading the training or planning is use, and renews the link; fetching the bare address is not.
   const userId = await coachLinkUser((await ctx.params).token, reading || !!add || !!remove);
   if (!userId) {
+    seen("gone");
     return answer("This PaceBeep coach link no longer works: the runner disconnected it, or it went 30 days without use. Ask the runner for a new one: in the PaceBeep app, Connect an assistant.\n", 404);
   }
   const link = url.origin + url.pathname;
-  if (!add && !remove) return reading ? answer(await coachBrief(userId, link), 200, true) : answer(coachCover(link));
+  if (!add && !remove) {
+    seen(reading ? "training" : "cover");
+    return reading ? answer(await coachBrief(userId, link), 200, true) : answer(coachCover(link));
+  }
 
+  const did = remove ? "delete" : "add";
   let outcome: string;
   let status = 200;
   try {
     outcome = await coachWrite(userId, { add, remove });
+    // An add's first sentence is counts only; a delete's names the workout, so it is left out.
+    seen(did, { ok: true, ...(!remove && { note: outcome.split(". ")[0] }) });
   } catch (error) {
     if (!(error instanceof ClientError)) throw error;
+    seen(did, { ok: false, note: error.message.slice(0, 200) });
     outcome = `Not done: ${error.message}`;
     if (request.method === "POST") status = error.status;
   }

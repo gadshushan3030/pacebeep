@@ -1,6 +1,7 @@
 import * as z from "zod/v4";
 import { withBearer } from "@/lib/bearer";
 import { today } from "@/lib/db";
+import { event } from "@/lib/log";
 import { ClientError, importPlan, planPrompt } from "@/lib/workouts";
 
 // A plan from any chat, without MCP.
@@ -19,9 +20,13 @@ export const POST = withBearer(async (request, { userId }) => {
   const parsed = body.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return Response.json({ error: z.prettifyError(parsed.error) }, { status: 400 });
   try {
-    return Response.json(await importPlan(userId, parsed.data.text));
+    const result = await importPlan(userId, parsed.data.text);
+    event("paste", { via: "app", ok: true, created: result.created.length, past: result.past, earlier: result.earlier.length });
+    return Response.json(result);
   } catch (error) {
-    if (error instanceof ClientError) return Response.json({ error: error.message }, { status: error.status });
-    throw error;
+    if (!(error instanceof ClientError)) throw error;
+    // Why pastes fail is the one thing nobody could see: the runner only sees it on their screen.
+    event("paste", { via: "app", ok: false, note: error.message.slice(0, 200) });
+    return Response.json({ error: error.message }, { status: error.status });
   }
 });
