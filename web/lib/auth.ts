@@ -69,7 +69,7 @@ export const auth = betterAuth({
   plugins: [
     jwt(),
     // OAuth 2.1 server for agents: tokens are bound to MCP_RESOURCE (aud).
-    // ChatGPT registers itself (dynamic client registration); each user approves on /oauth/consent.
+    // An assistant registers itself (dynamic client registration); each user approves on /oauth/consent.
     mcp({
       loginPage: "/login",
       consentPage: "/oauth/consent",

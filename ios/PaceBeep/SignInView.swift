@@ -11,7 +11,7 @@ struct SignInView: View {
             Text("Your coach plans the intervals. Your phone counts them.")
                 .font(.display(42))
                 .fixedSize(horizontal: false, vertical: true)
-            Text("Workouts you plan with ChatGPT or Claude show up here. Run with the screen locked: the beeps keep going, and the run goes back to your coach.")
+            Text("Workouts your personal assistant plans show up here. Run with the screen locked: the beeps keep going, and the run goes back to your coach.")
                 .font(.system(size: 17))
                 .foregroundStyle(Color(hex: 0x4A4D55))
             Spacer(minLength: 0)

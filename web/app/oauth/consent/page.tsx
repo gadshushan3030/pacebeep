@@ -2,7 +2,7 @@ import { sql } from "@/lib/db";
 import { requireUser } from "@/lib/session";
 import { ConsentButtons } from "./ConsentButtons";
 
-// Better Auth sends the user here when an assistant (e.g. ChatGPT) asks to connect to /mcp.
+// Better Auth sends the user here when an assistant asks to connect to /mcp.
 // The allow/deny request carries the signed query and is verified by Better Auth.
 export default async function ConsentPage({ searchParams }: PageProps<"/oauth/consent">) {
   const user = await requireUser();

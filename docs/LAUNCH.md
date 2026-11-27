@@ -12,7 +12,7 @@ Links to use everywhere:
 
 - [ ] GitHub repo → About → add topics so people searching find it:
   ```bash
-  gh repo edit gadshushan3030/pacebeep --add-topic ios,swift,swiftui,live-activities,interval-training,ai-coach,claude,open-source
+  gh repo edit gadshushan3030/pacebeep --add-topic ios,swift,swiftui,live-activities,interval-training,ai-coach,open-source
   ```
 - [ ] GitHub repo → Settings → Social preview: upload `docs/screenshots/app.png` (1280×640 works best; crop if needed). This is the image Reddit, X and LinkedIn show when the repo link is pasted.
 - [ ] Pin the repo on your GitHub profile (profile → Customize your pins).
@@ -29,14 +29,14 @@ Post on a weekday, 14:00–16:00 Israel time (morning in the US). Title max 80 c
 
 **First comment (post it right after submitting):**
 
-> I run intervals and got tired of typing them into a timer. PaceBeep is a free, open-source iOS app plus a small Next.js backend with an MCP server: you tell ChatGPT or Claude "plan my week", it writes the workouts into your account over OAuth, and the phone plays them with beeps that keep going with the screen locked. After each run the app sends back what actually happened and your RPE, so the coach can adjust.
+> I run intervals and got tired of typing them into a timer. PaceBeep is a free, open-source iOS app plus a small Next.js backend with an MCP server: you tell your personal assistant "plan my week", it writes the workouts into your account over OAuth, and the phone plays them with beeps that keep going with the screen locked. After each run the app sends back what actually happened and your RPE, so the coach can adjust.
 >
 > Things that were harder than I expected and might interest people here:
 >
 > - Background audio on iOS: timers die when the screen locks. I render the whole workout into one audio track (silence with beeps at exact offsets) and play it with the background audio mode, so iOS keeps the app alive and the beeps cannot drift.
 > - Live Activities drop state updates with the screen off. The fix was to resend the state every 10 s; a staleDate fallback did not work.
 > - OAuth 2.1 for agents: dynamic client registration, PKCE, a consent page, tokens bound to the /mcp audience, and a live consent check on every call so "Disconnect" works instantly.
-> - App Review rejected it under Guideline 5 because the listing mentioned ChatGPT and China requires a deep-synthesis permit; the fix was to exclude China mainland.
+> - App Review rejected it under Guideline 5 because the listing named a third-party AI chatbot and China requires a deep-synthesis permit; the fix was to exclude China mainland.
 >
 > Stack: SwiftUI, Next.js 16, Better Auth, Postgres on Neon, Vercel. MIT. Happy to answer anything about the audio trick or the MCP/OAuth layer.
 
@@ -46,7 +46,7 @@ Post on a weekday, 14:00–16:00 Israel time (morning in the US). Title max 80 c
 
 **Title:** I built a free, open-source interval app where your AI coach plans the session and your phone just beeps
 
-> Runner and developer here. I wanted interval sessions that I did not have to type into a timer every time, so I built PaceBeep: you ask ChatGPT or Claude to plan your week, the workouts show up in the app, and it beeps work/rest with the screen locked (lock screen shows the current interval: orange = run, blue = rest). After the run you rate how hard it felt and the coach sees it next time.
+> Runner and developer here. I wanted interval sessions that I did not have to type into a timer every time, so I built PaceBeep: you ask your personal assistant to plan your week, the workouts show up in the app, and it beeps work/rest with the screen locked (lock screen shows the current interval: orange = run, blue = rest). After the run you rate how hard it felt and the coach sees it next time.
 >
 > It is free, no ads, no subscription, and the whole thing is open source if you want to see what it does with your data (answer: stores your workouts and runs, nothing else, and you can delete the account in one tap).
 >
@@ -64,17 +64,17 @@ Post on a weekday, 14:00–16:00 Israel time (morning in the US). Title max 80 c
 >
 > Second lesson: Live Activities lose `update()` calls with the screen off (never in the simulator). Resending the state every 10 s fixed it; `staleDate` did not.
 >
-> Third: App Review took 5 weeks for a first-time developer account, including a "Guideline 5 – Legal" rejection because the listing mentions ChatGPT and China needs a permit for that. Excluding China mainland was the fix.
+> Third: App Review took 5 weeks for a first-time developer account, including a "Guideline 5 – Legal" rejection because the listing named a third-party AI chatbot and China needs a permit for that. Excluding China mainland was the fix.
 >
-> Code is MIT: SwiftUI app + Next.js backend with OAuth 2.1 and an MCP server so ChatGPT/Claude can write workouts into it.
+> Code is MIT: SwiftUI app + Next.js backend with OAuth 2.1 and an MCP server so a personal assistant can write workouts into it.
 
 ### r/swift
 
 Same as r/iOSProgramming, shorter title: **Interval timer that survives the lock screen by rendering beeps into one audio track (open source)**
 
-### r/ClaudeAI and r/ChatGPT
+### AI assistant communities
 
-**Title:** I gave Claude/ChatGPT a running coach's hands: it writes interval workouts into my phone over MCP, the phone beeps them
+**Title:** I gave my personal assistant a running coach's hands: it writes interval workouts into my phone over MCP, the phone beeps them
 
 > Open-source project: PaceBeep. The backend is an MCP server with OAuth (dynamic client registration + PKCE), so you connect it like any connector, approve it once, and then "plan me a 5k week, I ran 4 days last week and my long run felt like 7/10" becomes real workouts in the iPhone app. After each run the app reports what happened and your RPE back, so the next plan is based on what you actually did.
 >
@@ -97,18 +97,18 @@ Short version of the r/running post plus the two links.
 Launch on a Tuesday–Thursday, 00:01 PT (10:01 Israel time). Needs: logo (512×512), 3–5 screenshots from `docs/screenshots/`, the 30 s video.
 
 - **Tagline (60 chars):** Your AI coach plans the intervals. Your phone beeps them.
-- **Description:** PaceBeep is a free, open-source iPhone interval timer that your AI assistant can program. Connect ChatGPT or Claude once, ask for a week of training, and the workouts land in the app with beeps that keep going with the screen locked and a Live Activity on the lock screen. Each run and your RPE go back to the coach. No ads, no subscription, MIT licensed.
+- **Description:** PaceBeep is a free, open-source iPhone interval timer that your AI assistant can program. Connect your personal assistant once, ask for a week of training, and the workouts land in the app with beeps that keep going with the screen locked and a Live Activity on the lock screen. Each run and your RPE go back to the coach. No ads, no subscription, MIT licensed.
 - **First comment:** the Show HN comment, minus the technical bullets.
 
 ## 4. X / LinkedIn
 
 **X (thread opener):**
-> Shipped my first App Store app today. PaceBeep: tell Claude or ChatGPT to plan your running week, your iPhone beeps the intervals with the screen locked, and the coach learns from how it went. Free, open source. 🧵 on the three iOS problems that almost killed it:
+> Shipped my first App Store app today. PaceBeep: tell your personal assistant to plan your running week, your iPhone beeps the intervals with the screen locked, and the coach learns from how it went. Free, open source. 🧵 on the three iOS problems that almost killed it:
 
 Then one tweet per lesson (background audio, Live Activity updates, App Review), ending with the two links.
 
 **LinkedIn (portfolio voice):**
-> After 5 weeks in App Review, PaceBeep is live. It is a free, open-source interval-running app: a SwiftUI iPhone client, a Next.js backend with an OAuth 2.1 MCP server, and Postgres on Neon, so ChatGPT or Claude can plan a runner's week and the phone plays it with beeps that survive the lock screen.
+> After 5 weeks in App Review, PaceBeep is live. It is a free, open-source interval-running app: a SwiftUI iPhone client, a Next.js backend with an OAuth 2.1 MCP server, and Postgres on Neon, so a personal assistant can plan a runner's week and the phone plays it with beeps that survive the lock screen.
 >
 > What I learned: shipping a native app end to end (background audio, Live Activities, App Review), building a multi-user OAuth server for AI agents, and designing for idempotency so a phone with no signal never duplicates a run.
 >
@@ -120,7 +120,7 @@ Then one tweet per lesson (background audio, Live Activity updates, App Review),
 - Facebook / Telegram developer groups: "מתכנתים ישראל", "iOS Developers Israel". Lead with the background-audio trick, link to GitHub.
 - Hebrew draft for runners:
 
-> בניתי אפליקציה חינמית ובקוד פתוח לאינטרוולים: אומרים ל-ChatGPT או Claude "תכנן לי שבוע", האימונים מגיעים לאייפון, והטלפון מצפצף עבודה/מנוחה גם כשהמסך נעול (במסך הנעילה רואים את האינטרוול הנוכחי). בסוף מדרגים כמה היה קשה והמאמן רואה את זה בתכנון הבא. בלי פרסומות, בלי מנוי, והקוד פתוח למי שרוצה לבדוק מה קורה עם הנתונים. אשמח לפידבק.
+> בניתי אפליקציה חינמית ובקוד פתוח לאינטרוולים: אומרים לעוזר האישי "תכנן לי שבוע", האימונים מגיעים לאייפון, והטלפון מצפצף עבודה/מנוחה גם כשהמסך נעול (במסך הנעילה רואים את האינטרוול הנוכחי). בסוף מדרגים כמה היה קשה והמאמן רואה את זה בתכנון הבא. בלי פרסומות, בלי מנוי, והקוד פתוח למי שרוצה לבדוק מה קורה עם הנתונים. אשמח לפידבק.
 
 ## 6. Directories and lists (one PR each, lasting traffic)
 

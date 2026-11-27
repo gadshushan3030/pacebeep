@@ -4,7 +4,7 @@ import Foundation
 import Security
 import UIKit
 
-/// Sign-in against the PaceBeep server: the same OAuth server ChatGPT connects to. The app
+/// Sign-in against the PaceBeep server: the same OAuth server assistants connect to. The app
 /// registers itself once as a native client, signs in with PKCE in a system browser sheet, and
 /// keeps the refresh token in the Keychain. The dashboard lists it under connected assistants;
 /// Disconnect there signs the phone out.
