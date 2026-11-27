@@ -33,5 +33,7 @@ Background audio (UIBackgroundModes audio): each workout is rendered into one au
 
 Apple Watch and HealthKit: if a paired Apple Watch has PaceBeep installed, starting a workout on the iPhone starts a workout session on the Watch (HKWorkoutSession), which shows the elapsed time and heart rate. At the end, the average and maximum heart rate (for the run and each interval) and the distance are sent to our server with the run, so the runner's coach sees them, and the workout is saved in Health. PaceBeep reads no other Health data. The Watch app is optional; without a Watch the app works as before.
 
+Connect an assistant and Paste a plan (new in 1.0.4): two optional ways to get workouts from the user's own AI assistant. Neither is needed to review the app. "Connect an assistant" (Home, under Built in) creates a private link and copies it to the clipboard; the user pastes it into a chat with their assistant, which can then read that user's runs (with heart rate, when a Watch recorded it) and suggest workouts. Only the user can create and share the link, a workout added through it waits for the user's approval in the app, and the link stops working after 30 days without use or when the user disconnects it on pacebeep.vercel.app. "Paste a plan" copies a text prompt to give to any chat and takes the chat's answer back with the system Paste button; Undo removes what was added.
+
 Account deletion: Home → "Delete account" opens the account page on pacebeep.vercel.app, where "Delete my account" removes the account and all its data.
 ```
