@@ -1,0 +1,5 @@
+# PaceBeep. Everything here may be fetched. An assistant that checks this file before opening a
+# runner's coach link (/c/...) must find that it is allowed to. Coach links answer "noindex"
+# themselves, and everything else private sits behind sign-in.
+User-agent: *
+Allow: /

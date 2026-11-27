@@ -4,6 +4,8 @@ import { NextResponse, type NextRequest } from "next/server";
 // Optimistic gate: no session cookie → /login. Pages verify the session for real (lib/session.ts).
 // /api, /mcp and /.well-known are excluded: Better Auth and OAuth bearer tokens handle those.
 // So is /c/<token> (a coach link: the token is the key). /assistant tells an assistant how to connect.
+// robots.txt and favicon.ico are what an assistant's browser asks for around a coach link: sent to
+// /login, the first came back as a sign-in page instead of "you may fetch this".
 const PUBLIC = new Set(["/login", "/privacy", "/terms", "/assistant"]);
 
 export function proxy(request: NextRequest) {
@@ -14,5 +16,5 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|icon|apple-icon|api|mcp|c/|\\.well-known).*)"],
+  matcher: ["/((?!_next/static|_next/image|icon|apple-icon|favicon\\.ico|robots\\.txt|api|mcp|c/|\\.well-known).*)"],
 };

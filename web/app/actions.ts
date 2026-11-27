@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { coachInvite, createCoachLink, revokeCoachLink } from "@/lib/coach-link";
 import { pool } from "@/lib/db";
+import { event } from "@/lib/log";
 import { requireUser } from "@/lib/session";
 import { approveWorkout, ClientError, createWorkout, deleteWorkout, deleteWorkouts, importPlan, workoutInput } from "@/lib/workouts";
 
@@ -49,6 +50,7 @@ export async function pastePlan(_prev: { ok: boolean; message: string; created: 
     const { workouts, created, past, earlier } = await importPlan(user.id, String(form.get("text") ?? ""));
     revalidatePath("/", "layout");
     const n = created.length;
+    event("paste", { via: "web", ok: true, created: n, past, earlier: earlier.length });
     return {
       ok: true,
       message: (n ? `Added ${n} workout${n === 1 ? "" : "s"}.` : `Already added: ${workouts} workout${workouts === 1 ? "" : "s"}.`) + (past ? ` ${past} dated before today left out.` : ""),
@@ -56,8 +58,9 @@ export async function pastePlan(_prev: { ok: boolean; message: string; created: 
       earlier,
     };
   } catch (error) {
-    if (error instanceof ClientError) return { ok: false, message: error.message, created: [], earlier: [] };
-    throw error;
+    if (!(error instanceof ClientError)) throw error;
+    event("paste", { via: "web", ok: false, note: error.message.slice(0, 200) });
+    return { ok: false, message: error.message, created: [], earlier: [] };
   }
 }
 
