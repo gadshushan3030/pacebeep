@@ -100,7 +100,7 @@ ${link}?training
 
 They are kept off this first page on purpose. An app that fetches a link only to show a preview of it stops here, and so never receives them.
 
-Anyone who has the link can read the training and plan workouts, so it is not for sharing or for writing out in a chat. It ends after 30 days without use, or when the runner disconnects it.
+Anyone who has the link can read the training and plan workouts. The runner already has it, so there is no need to repeat any of its addresses in a reply, and good reason not to. It ends after 30 days without use, or when the runner disconnects it.
 `;
 
 async function plannedSection(userId: string, day: string) {
@@ -149,7 +149,7 @@ export async function coachBrief(userId: string, link: string) {
 
   return `# PaceBeep coach link: one runner's training
 
-${intro} The runner shared this link with you so that you can coach them. Anyone who has it can read this page and plan workouts, so it is not for sharing or for writing out in a chat.
+${intro} The runner shared this link with you so that you can coach them. Anyone who has it can read this page and plan workouts. The runner already has it, so there is no need to repeat any of its addresses in a reply, and good reason not to.
 
 Today is ${dated(day)} (Israel time).
 
@@ -171,7 +171,7 @@ ${planShape(day)}
 Three ways to send it. The first one your tools allow is the one to use:
 1. POST the list as the body of a request to ${link} (any content type)
 2. Open this page in a browser, paste the list into the box at the bottom, press "Add workouts".
-3. GET ${link}?add= followed by the list, percent-encoded (every character outside A-Z a-z 0-9, "·" included). Keep the whole address under about 4,000 characters, which is about a week of workouts; a longer plan goes in several requests.
+3. GET ${link}?add= followed by the list, percent-encoded the usual way (encodeURIComponent, or urllib.parse.quote with safe=""; "·" becomes %C2%B7). Keep the whole address under about 4,000 characters, which is about a week of workouts; a longer plan goes in several requests.
 
 The answer starts with what happened ("Added 3 workouts." or "Not done:" and the reason), then lists what is planned now. A GET always answers 200, so the first line is the result; a POST that is not done also carries an error status. A workout sent again with every field the same is stored once; with anything changed it is a new workout. Workouts dated before today are left out.
 
